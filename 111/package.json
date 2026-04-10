@@ -1,0 +1,36 @@
+{
+  "name": "xiuhongqi-digital-platform",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "《绣红旗》数字展示平台",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "nodemon server/index.js",
+    "build": "npm --prefix frontend-vue run build"
+  },
+  "keywords": [
+    "非遗文化",
+    "红色文化",
+    "数字展示",
+    "绣红旗"
+  ],
+  "author": "湖北田静之科技有限公司",
+  "license": "MIT",
+  "dependencies": {
+    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.0",
+    "mysql2": "^3.6.0",
+    "tencentcloud-sdk-nodejs-sms": "^4.1.171"
+  },
+  "devDependencies": {
+    "eslint": "^8.50.0",
+    "nodemon": "^3.0.1",
+    "prettier": "^3.0.3"
+  }
+}

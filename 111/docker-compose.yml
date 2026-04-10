@@ -1,0 +1,75 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: xiuhongqi-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: xiuhongqi_digital
+      MYSQL_USER: xiuhongqi_user
+      MYSQL_PASSWORD: user_password
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./data/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    command: 
+      --default-authentication-plugin=mysql_native_password
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+    restart: unless-stopped
+
+  # PHPMyAdmin（可选，用于数据库管理）
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: xiuhongqi-phpmyadmin
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 1
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
+  # Node.js后端开发服务器
+  # 注意：建议在主机上运行npm run dev，以便利用VSCode调试
+  # 如需容器化运行，可取消注释以下配置
+  # node-backend:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile.dev
+  #   container_name: xiuhongqi-backend
+  #   environment:
+  #     NODE_ENV: development
+  #     DB_HOST: mysql
+  #     DB_PORT: 3306
+  #     DB_USER: xiuhongqi_user
+  #     DB_PASSWORD: user_password
+  #     DB_NAME: xiuhongqi_digital
+  #   ports:
+  #     - "3000:3000"
+  #   volumes:
+  #     - ./server:/app/server
+  #     - ./config:/app/config
+  #     - ./package.json:/app/package.json
+  #   depends_on:
+  #     mysql:
+  #       condition: service_healthy
+  #   command: npm run dev
+  #   restart: unless-stopped
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  default:
+    name: xiuhongqi-network
