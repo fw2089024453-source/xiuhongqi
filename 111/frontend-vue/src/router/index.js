@@ -88,6 +88,24 @@ const routes = [
         component: () => import('@/views/admin/AdminReviewView.vue'),
         meta: { title: '作品审核', requiresAuth: true, requiresAdmin: true },
       },
+      {
+        path: 'operations',
+        name: 'admin-operations',
+        component: () => import('@/views/admin/AdminOperationsView.vue'),
+        meta: { title: '运营处理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'users',
+        name: 'admin-users',
+        component: () => import('@/views/admin/AdminUsersView.vue'),
+        meta: { title: '用户管理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'interaction',
+        name: 'admin-interaction',
+        component: () => import('@/views/admin/AdminInteractionView.vue'),
+        meta: { title: '互动管理', requiresAuth: true, requiresAdmin: true },
+      },
     ],
   },
   {

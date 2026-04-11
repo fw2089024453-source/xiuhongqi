@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'path'
 import { pool } from '../../config/db.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -16,12 +17,8 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage })
 
-router.get('/profile', async (req, res) => {
-  const { userId, username } = req.query
-
-  if (!userId && !username) {
-    return res.status(400).json({ success: false, message: '缺少用户标识' })
-  }
+router.get('/profile', requireAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   try {
     const [rows] = await pool.query(
@@ -39,30 +36,27 @@ router.get('/profile', async (req, res) => {
           created_at,
           last_login_at
         FROM users
-        WHERE id = COALESCE(?, id) AND username = COALESCE(?, username)
+        WHERE id = ?
         LIMIT 1
       `,
-      [userId || null, username || null],
+      [userId],
     )
 
     if (!rows.length) {
       return res.status(404).json({ success: false, message: '用户不存在' })
     }
 
-    res.json({ success: true, data: rows[0] })
+    return res.json({ success: true, data: rows[0] })
   } catch (error) {
     console.error('user profile error:', error)
-    res.status(500).json({ success: false, message: '用户资料加载失败' })
+    return res.status(500).json({ success: false, message: '用户资料加载失败' })
   }
 })
 
-router.put('/profile', upload.single('avatar'), async (req, res) => {
-  const { user_id, display_name, bio, phone } = req.body
+router.put('/profile', requireAuth, upload.single('avatar'), async (req, res) => {
+  const { display_name, bio, phone } = req.body
+  const userId = Number(req.user?.id || 0)
   const avatarUrl = req.file ? `/uploads/${req.file.filename}` : null
-
-  if (!user_id) {
-    return res.status(400).json({ success: false, message: '缺少用户标识' })
-  }
 
   try {
     if (avatarUrl) {
@@ -72,7 +66,7 @@ router.put('/profile', upload.single('avatar'), async (req, res) => {
           SET display_name = ?, bio = ?, phone = ?, avatar_url = ?
           WHERE id = ?
         `,
-        [display_name || null, bio || '', phone || null, avatarUrl, user_id],
+        [display_name || null, bio || '', phone || null, avatarUrl, userId],
       )
     } else {
       await pool.query(
@@ -81,7 +75,7 @@ router.put('/profile', upload.single('avatar'), async (req, res) => {
           SET display_name = ?, bio = ?, phone = ?
           WHERE id = ?
         `,
-        [display_name || null, bio || '', phone || null, user_id],
+        [display_name || null, bio || '', phone || null, userId],
       )
     }
 
@@ -92,33 +86,24 @@ router.put('/profile', upload.single('avatar'), async (req, res) => {
         WHERE id = ?
         LIMIT 1
       `,
-      [user_id],
+      [userId],
     )
 
-    res.json({
+    return res.json({
       success: true,
       message: '个人资料已更新',
       data: rows[0],
     })
   } catch (error) {
     console.error('user update profile error:', error)
-    res.status(500).json({ success: false, message: '资料更新失败' })
+    return res.status(500).json({ success: false, message: '资料更新失败' })
   }
 })
 
-router.get('/dashboard', async (req, res) => {
-  const userId = Number(req.query.userId || 0)
-  const username = req.query.username || null
-
-  if (!userId && !username) {
-    return res.status(400).json({ success: false, message: '缺少用户标识' })
-  }
+router.get('/dashboard', requireAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   try {
-    const userFilter = userId
-      ? { clause: 'u.id = ?', value: userId }
-      : { clause: 'u.username = ?', value: username }
-
     const [[profileRows], [videoWorks], [embWorks], [skillWorks], [forumTopics], [interactionMessages], [contactMessages], [eventRegistrations]] =
       await Promise.all([
         pool.query(
@@ -136,37 +121,37 @@ router.get('/dashboard', async (req, res) => {
               u.created_at,
               u.last_login_at
             FROM users u
-            WHERE ${userFilter.clause}
+            WHERE u.id = ?
             LIMIT 1
           `,
-          [userFilter.value],
+          [userId],
         ),
         pool.query(
           `
             SELECT id, title, description, cover_url, status, votes_count, created_at
             FROM videos
-            WHERE ${userId ? 'author_id = ?' : 'contributor_name = ?'}
+            WHERE author_id = ?
             ORDER BY created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
         pool.query(
           `
             SELECT id, title, description, image_url, status, votes_count, created_at
             FROM emb_works
-            WHERE ${userId ? 'author_id = ?' : 'author_name = ?'}
+            WHERE author_id = ?
             ORDER BY created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
         pool.query(
           `
             SELECT id, title, description, image_url, status, created_at
             FROM skill_teaching_works
-            WHERE ${userId ? 'user_id = ?' : 'author_name = ?'}
+            WHERE user_id = ?
             ORDER BY created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
         pool.query(
           `
@@ -179,29 +164,28 @@ router.get('/dashboard', async (req, res) => {
               s.name AS section_name
             FROM forum_topics t
             JOIN forum_sections s ON s.id = t.section_id
-            JOIN users u ON u.id = t.author_id
-            WHERE ${userFilter.clause}
+            WHERE t.author_id = ?
             ORDER BY t.created_at DESC
           `,
-          [userFilter.value],
+          [userId],
         ),
         pool.query(
           `
             SELECT id, content, likes_count, created_at
             FROM interaction_messages
-            WHERE ${userId ? 'user_id = ?' : 'author_name = ?'}
+            WHERE user_id = ?
             ORDER BY created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
         pool.query(
           `
             SELECT id, contact_way, type, message, status, created_at
             FROM contact_messages
-            WHERE ${userId ? 'user_id = ?' : 'name = ?'}
+            WHERE user_id = ?
             ORDER BY created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
         pool.query(
           `
@@ -215,10 +199,10 @@ router.get('/dashboard', async (req, res) => {
               e.location
             FROM event_registrations r
             JOIN interaction_events e ON e.id = r.event_id
-            WHERE ${userId ? 'r.user_id = ?' : 'r.user_name = ?'}
+            WHERE r.user_id = ?
             ORDER BY r.created_at DESC
           `,
-          [userId || username],
+          [userId],
         ),
       ])
 
@@ -227,7 +211,7 @@ router.get('/dashboard', async (req, res) => {
       return res.status(404).json({ success: false, message: '用户不存在' })
     }
 
-    res.json({
+    return res.json({
       success: true,
       data: {
         profile,
@@ -251,7 +235,7 @@ router.get('/dashboard', async (req, res) => {
     })
   } catch (error) {
     console.error('user dashboard error:', error)
-    res.status(500).json({ success: false, message: '用户中心数据加载失败' })
+    return res.status(500).json({ success: false, message: '用户中心数据加载失败' })
   }
 })
 

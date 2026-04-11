@@ -28,16 +28,16 @@ export function createForumPostApi(topicId, payload) {
   })
 }
 
-export function getForumPostCommentsApi(postId, params) {
-  return request.get(`/interaction/forum/posts/${postId}/comments`, { params })
+export function getForumPostCommentsApi(postId) {
+  return request.get(`/interaction/forum/posts/${postId}/comments`)
 }
 
 export function createForumCommentApi(postId, payload) {
   return request.post(`/interaction/forum/posts/${postId}/comments`, payload)
 }
 
-export function toggleForumCommentLikeApi(commentId, payload) {
-  return request.post(`/interaction/forum/comments/${commentId}/toggle-like`, payload)
+export function toggleForumCommentLikeApi(commentId) {
+  return request.post(`/interaction/forum/comments/${commentId}/toggle-like`)
 }
 
 export function getInteractionMessagesApi() {

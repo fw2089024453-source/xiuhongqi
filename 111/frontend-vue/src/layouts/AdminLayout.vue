@@ -21,6 +21,21 @@ const menuItems = [
     label: '作品审核',
     desc: '审核视频与绣红旗投稿',
   },
+  {
+    index: '/admin/operations',
+    label: '运营处理',
+    desc: '处理留言、报名与联系消息',
+  },
+  {
+    index: '/admin/users',
+    label: '用户管理',
+    desc: '查看用户、角色与账号状态',
+  },
+  {
+    index: '/admin/interaction',
+    label: '互动管理',
+    desc: '管理论坛话题、帖子与活动',
+  },
 ]
 
 function goHome() {

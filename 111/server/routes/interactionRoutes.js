@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'path'
 import { pool } from '../../config/db.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -151,10 +152,11 @@ router.get('/forum/topics', async (req, res) => {
   }
 })
 
-router.post('/forum/topics', async (req, res) => {
-  const { section_id, title, content, author_id } = req.body
+router.post('/forum/topics', requireAuth, async (req, res) => {
+  const { section_id, title, content } = req.body
+  const authorId = Number(req.user?.id || 0)
 
-  if (!section_id || !title || !content || !author_id) {
+  if (!section_id || !title || !content) {
     return res.status(400).json({ success: false, message: '请填写完整的话题信息' })
   }
 
@@ -164,7 +166,7 @@ router.post('/forum/topics', async (req, res) => {
         INSERT INTO forum_topics (section_id, title, content, author_id, status)
         VALUES (?, ?, ?, ?, 'active')
       `,
-      [section_id, title, content, author_id],
+      [section_id, title, content, authorId],
     )
 
     await pool.query('UPDATE forum_sections SET topics_count = topics_count + 1 WHERE id = ?', [section_id])
@@ -256,11 +258,12 @@ router.get('/forum/topics/:id/posts', async (req, res) => {
   }
 })
 
-router.post('/forum/topics/:id/posts', upload.single('image'), async (req, res) => {
-  const { title, content, author_id } = req.body
+router.post('/forum/topics/:id/posts', requireAuth, upload.single('image'), async (req, res) => {
+  const { title, content } = req.body
+  const authorId = Number(req.user?.id || 0)
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''
 
-  if (!content || !author_id) {
+  if (!content) {
     return res.status(400).json({ success: false, message: '请填写帖子内容' })
   }
 
@@ -270,7 +273,7 @@ router.post('/forum/topics/:id/posts', upload.single('image'), async (req, res) 
         INSERT INTO forum_posts (topic_id, title, content, author_id, image_url)
         VALUES (?, ?, ?, ?, ?)
       `,
-      [req.params.id, title || null, content, author_id, imageUrl],
+      [req.params.id, title || null, content, authorId, imageUrl],
     )
 
     await pool.query(
@@ -279,7 +282,7 @@ router.post('/forum/topics/:id/posts', upload.single('image'), async (req, res) 
         SET replies_count = replies_count + 1, last_reply_at = NOW(), last_reply_by = ?
         WHERE id = ?
       `,
-      [author_id, req.params.id],
+      [authorId, req.params.id],
     )
 
     res.json({
@@ -293,8 +296,8 @@ router.post('/forum/topics/:id/posts', upload.single('image'), async (req, res) 
   }
 })
 
-router.get('/forum/posts/:id/comments', async (req, res) => {
-  const userId = Number(req.query.userId || 0)
+router.get('/forum/posts/:id/comments', optionalAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   try {
     const [rows] = await pool.query(
@@ -322,10 +325,11 @@ router.get('/forum/posts/:id/comments', async (req, res) => {
   }
 })
 
-router.post('/forum/posts/:id/comments', async (req, res) => {
-  const { author_id, content } = req.body
+router.post('/forum/posts/:id/comments', requireAuth, async (req, res) => {
+  const { content } = req.body
+  const authorId = Number(req.user?.id || 0)
 
-  if (!author_id || !content) {
+  if (!content) {
     return res.status(400).json({ success: false, message: '请填写评论内容' })
   }
 
@@ -335,7 +339,7 @@ router.post('/forum/posts/:id/comments', async (req, res) => {
         INSERT INTO forum_comments (post_id, author_id, content)
         VALUES (?, ?, ?)
       `,
-      [req.params.id, author_id, content],
+      [req.params.id, authorId, content],
     )
 
     await pool.query('UPDATE forum_posts SET comments_count = comments_count + 1 WHERE id = ?', [req.params.id])
@@ -347,8 +351,8 @@ router.post('/forum/posts/:id/comments', async (req, res) => {
   }
 })
 
-router.post('/forum/comments/:id/toggle-like', async (req, res) => {
-  const userId = Number(req.body.userId || 0)
+router.post('/forum/comments/:id/toggle-like', requireAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   if (!userId) {
     return res.status(400).json({ success: false, message: '请先登录' })
@@ -406,11 +410,13 @@ router.get('/messages', async (req, res) => {
   }
 })
 
-router.post('/messages', upload.single('image'), async (req, res) => {
-  const { user_id, author_name, content, avatar_url } = req.body
+router.post('/messages', requireAuth, upload.single('image'), async (req, res) => {
+  const { content } = req.body
+  const userId = Number(req.user?.id || 0)
+  const authorName = req.user?.display_name || req.user?.username || '平台用户'
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''
 
-  if (!author_name || !content) {
+  if (!content) {
     return res.status(400).json({ success: false, message: '请填写留言内容' })
   }
 
@@ -420,7 +426,7 @@ router.post('/messages', upload.single('image'), async (req, res) => {
         INSERT INTO interaction_messages (user_id, author_name, avatar_url, content, image_url, status)
         VALUES (?, ?, ?, ?, ?, 'visible')
       `,
-      [user_id || null, author_name, avatar_url || '', content, imageUrl],
+      [userId, authorName, '', content, imageUrl],
     )
 
     res.json({ success: true, message: '留言发布成功' })
@@ -430,7 +436,7 @@ router.post('/messages', upload.single('image'), async (req, res) => {
   }
 })
 
-router.post('/messages/:id/like', async (req, res) => {
+router.post('/messages/:id/like', requireAuth, async (req, res) => {
   try {
     await pool.query('UPDATE interaction_messages SET likes_count = likes_count + 1 WHERE id = ?', [
       req.params.id,
@@ -462,10 +468,12 @@ router.get('/events', async (req, res) => {
   }
 })
 
-router.post('/events/:id/register', async (req, res) => {
-  const { user_id, user_name, phone, note } = req.body
+router.post('/events/:id/register', requireAuth, async (req, res) => {
+  const { phone, note } = req.body
+  const userId = Number(req.user?.id || 0)
+  const userName = req.user?.display_name || req.user?.username || '平台用户'
 
-  if (!user_name || !phone) {
+  if (!phone) {
     return res.status(400).json({ success: false, message: '请填写完整的报名信息' })
   }
 
@@ -475,7 +483,7 @@ router.post('/events/:id/register', async (req, res) => {
         INSERT INTO event_registrations (event_id, user_id, user_name, phone, note)
         VALUES (?, ?, ?, ?, ?)
       `,
-      [req.params.id, user_id || null, user_name, phone, note || ''],
+      [req.params.id, userId, userName, phone, note || ''],
     )
 
     res.json({ success: true, message: '报名提交成功，请等待后续通知' })

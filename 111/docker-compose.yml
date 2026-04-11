@@ -6,12 +6,12 @@ services:
     image: mysql:8.0
     container_name: xiuhongqi-mysql
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: xiuhongqi_digital
-      MYSQL_USER: xiuhongqi_user
-      MYSQL_PASSWORD: user_password
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root_password}
+      MYSQL_DATABASE: ${DB_NAME:-xiuhongqi_digital}
+      MYSQL_USER: ${DB_USER:-xiuhongqi_user}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-user_password}
     ports:
-      - "3306:3306"
+      - "${DB_PORT:-3306}:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./data/schema.sql:/docker-entrypoint-initdb.d/schema.sql

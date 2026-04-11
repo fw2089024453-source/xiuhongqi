@@ -2,6 +2,7 @@ import express from 'express'
 import multer from 'multer'
 import path from 'path'
 import { pool } from '../../config/db.js'
+import { requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -270,11 +271,13 @@ router.get('/works', async (req, res) => {
   }
 })
 
-router.post('/works', upload.single('image'), async (req, res) => {
-  const { user_id, author_name, title, description } = req.body
+router.post('/works', requireAuth, upload.single('image'), async (req, res) => {
+  const { title, description } = req.body
+  const userId = Number(req.user?.id || 0)
+  const authorName = req.user?.display_name || req.user?.username || '平台学员'
   const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''
 
-  if (!author_name || !title || !imageUrl) {
+  if (!title || !imageUrl) {
     return res.status(400).json({ success: false, message: '请填写完整的作品信息并上传图片' })
   }
 
@@ -284,7 +287,7 @@ router.post('/works', upload.single('image'), async (req, res) => {
         INSERT INTO skill_teaching_works (user_id, author_name, title, description, image_url, status)
         VALUES (?, ?, ?, ?, ?, 'pending')
       `,
-      [user_id || null, author_name, title, description || '', imageUrl],
+      [userId, authorName, title, description || '', imageUrl],
     )
 
     res.json({

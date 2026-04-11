@@ -18,11 +18,28 @@ export function signUserToken(user) {
     {
       id: user.id,
       username: user.username,
+      display_name: user.display_name,
       role: user.role,
     },
     JWT_SECRET,
     { expiresIn: '24h' },
   )
+}
+
+export function optionalAuth(req, res, next) {
+  const token = extractToken(req)
+
+  if (!token) {
+    return next()
+  }
+
+  try {
+    req.user = jwt.verify(token, JWT_SECRET)
+  } catch (error) {
+    req.user = null
+  }
+
+  return next()
 }
 
 export function requireAuth(req, res, next) {

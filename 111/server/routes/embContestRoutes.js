@@ -3,6 +3,7 @@ import multer from 'multer'
 import fs from 'fs'
 import path from 'path'
 import { pool } from '../../config/db.js'
+import { optionalAuth, requireAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -65,11 +66,13 @@ router.get('/overview', async (req, res) => {
   }
 })
 
-router.post('/works', upload, async (req, res) => {
+router.post('/works', requireAuth, upload, async (req, res) => {
   try {
-    const { title, description, author_id, author_name, category, phone } = req.body
+    const { title, description, category, phone } = req.body
+    const authorId = req.user?.id || null
+    const authorName = req.user?.display_name || req.user?.username || '平台用户'
 
-    if (!title || !author_name || !req.files?.length) {
+    if (!title || !req.files?.length) {
       return res.status(400).json({ success: false, message: '请填写完整的作品信息并至少上传一张图片' })
     }
 
@@ -81,7 +84,7 @@ router.post('/works', upload, async (req, res) => {
           title, description, image_url, author_id, author_name, category, phone, status
         ) VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')
       `,
-      [title, description || '', JSON.stringify(imageUrls), author_id || null, author_name, category || '', phone || ''],
+      [title, description || '', JSON.stringify(imageUrls), authorId, authorName, category || '', phone || ''],
     )
 
     res.status(201).json({ success: true, message: '作品提交成功，等待后台审核' })
@@ -91,8 +94,9 @@ router.post('/works', upload, async (req, res) => {
   }
 })
 
-router.get('/works', async (req, res) => {
-  const { userId, sort = 'hot', keyword = '', category = 'all', page = 1, limit = 8 } = req.query
+router.get('/works', optionalAuth, async (req, res) => {
+  const { sort = 'hot', keyword = '', category = 'all', page = 1, limit = 8 } = req.query
+  const currentUserId = Number(req.user?.id || 0)
 
   try {
     const offset = (Number(page) - 1) * Number(limit)
@@ -128,7 +132,7 @@ router.get('/works', async (req, res) => {
         ORDER BY ${orderBy}
         LIMIT ? OFFSET ?
       `,
-      [Number(userId) || 0, ...params, Number(limit), offset],
+      [currentUserId, ...params, Number(limit), offset],
     )
 
     res.json({
@@ -187,8 +191,8 @@ router.get('/works/:id/detail', async (req, res) => {
   }
 })
 
-router.post('/works/:id/vote', async (req, res) => {
-  const userId = Number(req.body.userId || 0)
+router.post('/works/:id/vote', requireAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   if (!userId) {
     return res.status(401).json({ success: false, message: '请先登录后再投票' })
@@ -223,8 +227,8 @@ router.post('/works/:id/vote', async (req, res) => {
   }
 })
 
-router.get('/works/:id/comments', async (req, res) => {
-  const userId = Number(req.query.userId || 0)
+router.get('/works/:id/comments', optionalAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   try {
     const [rows] = await pool.query(
@@ -251,17 +255,19 @@ router.get('/works/:id/comments', async (req, res) => {
   }
 })
 
-router.post('/works/:id/comments', async (req, res) => {
-  const { userId, username, content } = req.body
+router.post('/works/:id/comments', requireAuth, async (req, res) => {
+  const { content } = req.body
+  const userId = Number(req.user?.id || 0)
+  const username = req.user?.display_name || req.user?.username || '平台用户'
 
-  if (!userId || !content) {
+  if (!content) {
     return res.status(400).json({ success: false, message: '请先登录并填写评论内容' })
   }
 
   try {
     await pool.query(
       'INSERT INTO emb_comments (work_id, user_id, username, content) VALUES (?, ?, ?, ?)',
-      [req.params.id, userId, username || '平台用户', content],
+      [req.params.id, userId, username, content],
     )
 
     res.json({ success: true, message: '评论发布成功' })
@@ -271,8 +277,8 @@ router.post('/works/:id/comments', async (req, res) => {
   }
 })
 
-router.post('/works/comments/:id/like', async (req, res) => {
-  const userId = Number(req.body.userId || 0)
+router.post('/works/comments/:id/like', requireAuth, async (req, res) => {
+  const userId = Number(req.user?.id || 0)
 
   if (!userId) {
     return res.status(401).json({ success: false, message: '请先登录' })

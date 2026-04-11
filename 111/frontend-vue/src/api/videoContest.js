@@ -24,18 +24,18 @@ export function createVideoContestWorkApi(payload) {
   })
 }
 
-export function voteVideoContestWorkApi(workId, payload) {
-  return request.post(`/video-contest/works/${workId}/vote`, payload)
+export function voteVideoContestWorkApi(workId) {
+  return request.post(`/video-contest/works/${workId}/vote`)
 }
 
-export function getVideoContestCommentsApi(workId, params) {
-  return request.get(`/video-contest/works/${workId}/comments`, { params })
+export function getVideoContestCommentsApi(workId) {
+  return request.get(`/video-contest/works/${workId}/comments`)
 }
 
 export function createVideoContestCommentApi(workId, payload) {
   return request.post(`/video-contest/works/${workId}/comments`, payload)
 }
 
-export function likeVideoContestCommentApi(commentId, payload) {
-  return request.post(`/video-contest/works/comments/${commentId}/like`, payload)
+export function likeVideoContestCommentApi(commentId) {
+  return request.post(`/video-contest/works/comments/${commentId}/like`)
 }

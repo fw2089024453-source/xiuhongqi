@@ -68,7 +68,6 @@ async function submitForm() {
 
   try {
     const result = await submitContactMessageApi({
-      user_id: authStore.user?.id || null,
       name: form.name.trim(),
       contact_way: form.contact_way.trim(),
       type: form.type,

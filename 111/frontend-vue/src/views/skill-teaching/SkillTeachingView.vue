@@ -139,8 +139,6 @@ async function submitWork() {
 
   try {
     const payload = new FormData()
-    payload.append('user_id', authStore.user?.id || '')
-    payload.append('author_name', authStore.user?.display_name || authStore.user?.username || '平台学员')
     payload.append('title', uploadForm.title.trim())
     payload.append('description', uploadForm.description.trim())
     payload.append('image', uploadForm.image)

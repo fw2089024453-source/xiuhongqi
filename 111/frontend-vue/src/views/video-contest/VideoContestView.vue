@@ -114,7 +114,6 @@ async function loadWorks() {
 
   try {
     const result = await getVideoContestWorksApi({
-      userId: authStore.user?.id || 0,
       sort: currentSort.value,
       keyword: searchKeyword.value.trim(),
       category: currentCategory.value,
@@ -150,7 +149,7 @@ async function openDetail(workId) {
   try {
     const [detailResult, commentsResult] = await Promise.all([
       getVideoContestWorkDetailApi(workId),
-      getVideoContestCommentsApi(workId, { userId: authStore.user?.id || 0 }),
+      getVideoContestCommentsApi(workId),
     ])
 
     currentWork.value = detailResult.data
@@ -170,9 +169,7 @@ async function handleVote(work) {
   }
 
   try {
-    const result = await voteVideoContestWorkApi(work.id, {
-      userId: authStore.user?.id,
-    })
+    const result = await voteVideoContestWorkApi(work.id)
 
     ElMessage.success(result.message || '投票成功')
     await Promise.all([loadOverview(), loadWorks()])
@@ -200,8 +197,6 @@ async function submitWork() {
   try {
     const payload = new FormData()
     payload.append('title', submitForm.title.trim())
-    payload.append('author_id', authStore.user?.id || '')
-    payload.append('author_name', authStore.user?.display_name || authStore.user?.username || '平台用户')
     payload.append('phone', submitForm.phone.trim())
     payload.append('category', submitForm.category)
     payload.append('description', submitForm.description.trim())
@@ -234,8 +229,6 @@ async function submitComment() {
 
   try {
     const result = await createVideoContestCommentApi(currentWork.value.id, {
-      userId: authStore.user?.id,
-      username: authStore.user?.display_name || authStore.user?.username || '平台用户',
       content: commentForm.content.trim(),
     })
 
@@ -256,9 +249,7 @@ async function toggleCommentLike(comment) {
   }
 
   try {
-    const result = await likeVideoContestCommentApi(comment.id, {
-      userId: authStore.user?.id,
-    })
+    const result = await likeVideoContestCommentApi(comment.id)
 
     if (result.action === 'liked') {
       comment.is_liked = 1

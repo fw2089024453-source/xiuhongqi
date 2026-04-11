@@ -189,9 +189,7 @@ async function openPost(post) {
   selectedPost.value = post
 
   try {
-    const result = await getForumPostCommentsApi(post.id, {
-      userId: authStore.user?.id || 0,
-    })
+    const result = await getForumPostCommentsApi(post.id)
     comments.value = result.data || []
   } catch (error) {
     ElMessage.error(error.message || '评论加载失败')
@@ -216,7 +214,6 @@ async function submitTopic() {
       section_id: topicForm.section_id,
       title: topicForm.title.trim(),
       content: topicForm.content.trim(),
-      author_id: authStore.user?.id,
     })
 
     ElMessage.success('话题创建成功')
@@ -253,7 +250,6 @@ async function submitPost() {
     const payload = new FormData()
     payload.append('title', postForm.title.trim())
     payload.append('content', postForm.content.trim())
-    payload.append('author_id', authStore.user?.id || '')
     if (postForm.image) payload.append('image', postForm.image)
 
     await createForumPostApi(selectedTopic.value.id, payload)
@@ -290,7 +286,6 @@ async function submitComment() {
 
   try {
     await createForumCommentApi(selectedPost.value.id, {
-      author_id: authStore.user?.id,
       content: commentForm.content.trim(),
     })
     commentForm.content = ''
@@ -314,9 +309,7 @@ async function toggleCommentLike(comment) {
   }
 
   try {
-    const result = await toggleForumCommentLikeApi(comment.id, {
-      userId: authStore.user?.id,
-    })
+    const result = await toggleForumCommentLikeApi(comment.id)
 
     if (result.action === 'liked') {
       comment.is_liked = 1
@@ -345,9 +338,6 @@ async function submitMessage() {
 
   try {
     const payload = new FormData()
-    payload.append('user_id', authStore.user?.id || '')
-    payload.append('author_name', authStore.user?.display_name || authStore.user?.username || '平台用户')
-    payload.append('avatar_url', authStore.user?.avatar_url || '')
     payload.append('content', messageForm.content.trim())
     if (messageForm.image) payload.append('image', messageForm.image)
 
@@ -394,8 +384,6 @@ async function submitEventRegistration() {
 
   try {
     await registerInteractionEventApi(eventForm.eventId, {
-      user_id: authStore.user?.id,
-      user_name: authStore.user?.display_name || authStore.user?.username || '平台用户',
       phone: eventForm.phone.trim(),
       note: eventForm.note.trim(),
     })

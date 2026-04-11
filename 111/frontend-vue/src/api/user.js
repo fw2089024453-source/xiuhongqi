@@ -1,7 +1,7 @@
 import request from './request'
 
-export function getUserDashboardApi(params) {
-  return request.get('/user/dashboard', { params })
+export function getUserDashboardApi() {
+  return request.get('/user/dashboard')
 }
 
 export function updateUserProfileApi(payload) {

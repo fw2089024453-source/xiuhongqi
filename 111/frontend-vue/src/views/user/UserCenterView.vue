@@ -122,10 +122,7 @@ async function loadDashboard() {
   loading.value = true
 
   try {
-    const result = await getUserDashboardApi({
-      userId: authStore.user?.id,
-      username: authStore.user?.username,
-    })
+    const result = await getUserDashboardApi()
 
     dashboard.profile = result.data?.profile || null
     dashboard.summary = result.data?.summary || dashboard.summary
@@ -153,7 +150,6 @@ async function saveProfile() {
 
   try {
     const payload = new FormData()
-    payload.append('user_id', authStore.user.id)
     payload.append('display_name', profileForm.display_name.trim())
     payload.append('phone', profileForm.phone.trim())
     payload.append('bio', profileForm.bio.trim())

@@ -1,46 +1,48 @@
-// 服务器配置
-
 import dotenv from 'dotenv';
 
 dotenv.config();
 
+function parseCorsOrigins() {
+  const rawOrigins = process.env.CORS_ORIGIN;
+
+  if (rawOrigins) {
+    return rawOrigins
+      .split(',')
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (process.env.NODE_ENV === 'production') {
+    return ['https://xiuhongqi.com'];
+  }
+
+  return ['http://localhost:5173', 'http://localhost:4173', 'http://localhost:3000'];
+}
+
 const serverConfig = {
-  // 服务器端口
-  port: process.env.PORT || 3000,
-  
-  // 环境
+  port: Number(process.env.PORT || 3000),
   env: process.env.NODE_ENV || 'development',
-  
-  // CORS配置
   cors: {
-    origin: process.env.NODE_ENV === 'production' 
-      ? ['https://xiuhongqi.com'] 
-      : ['http://localhost:5173', 'http://localhost:3000'],
-    credentials: true
+    origin: parseCorsOrigins(),
+    credentials: true,
   },
-  
-  // 静态文件配置
   static: {
-    maxAge: process.env.NODE_ENV === 'production' ? '1y' : '1h'
+    maxAge: process.env.NODE_ENV === 'production' ? '1y' : '1h',
   },
-  
-  // 上传文件配置
   upload: {
-    maxFileSize: 10 * 1024 * 1024, // 10MB
-    allowedTypes: ['image/jpeg', 'image/png', 'image/svg+xml', 'image/gif']
+    maxFileSize: 10 * 1024 * 1024,
+    allowedTypes: ['image/jpeg', 'image/png', 'image/svg+xml', 'image/gif'],
   },
-  
-  // 会话配置
   session: {
-    secret: process.env.SESSION_SECRET || 'xiuhongqi_secret_key',
+    secret: process.env.SESSION_SECRET || 'replace-this-session-secret',
     resave: false,
     saveUninitialized: false,
-    cookie: { 
-      maxAge: 24 * 60 * 60 * 1000, // 24小时
+    cookie: {
+      maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production'
-    }
-  }
+      secure: process.env.NODE_ENV === 'production',
+    },
+  },
 };
 
 export default serverConfig;

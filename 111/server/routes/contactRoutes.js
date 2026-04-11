@@ -1,5 +1,6 @@
 import express from 'express'
 import { pool } from '../../config/db.js'
+import { optionalAuth } from '../middleware/auth.js'
 
 const router = express.Router()
 
@@ -39,8 +40,9 @@ router.get('/overview', async (req, res) => {
   }
 })
 
-router.post('/submit', async (req, res) => {
-  const { user_id, name, contact_way, type, message } = req.body
+router.post('/submit', optionalAuth, async (req, res) => {
+  const { name, contact_way, type, message } = req.body
+  const userId = Number(req.user?.id || 0) || null
 
   if (!name || !contact_way || !message) {
     return res.status(400).json({ success: false, message: '请填写完整的联系信息和留言内容' })
@@ -52,7 +54,7 @@ router.post('/submit', async (req, res) => {
         INSERT INTO contact_messages (user_id, name, contact_way, type, message, status)
         VALUES (?, ?, ?, ?, ?, 'new')
       `,
-      [user_id || null, name, contact_way, type || 'other', message],
+      [userId, name, contact_way, type || 'other', message],
     )
 
     res.json({ success: true, message: '留言提交成功，我们会尽快与你联系' })

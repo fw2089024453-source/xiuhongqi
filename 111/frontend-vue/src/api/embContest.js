@@ -24,18 +24,18 @@ export function createEmbContestWorkApi(payload) {
   })
 }
 
-export function voteEmbContestWorkApi(workId, payload) {
-  return request.post(`/emb-contest/works/${workId}/vote`, payload)
+export function voteEmbContestWorkApi(workId) {
+  return request.post(`/emb-contest/works/${workId}/vote`)
 }
 
-export function getEmbContestCommentsApi(workId, params) {
-  return request.get(`/emb-contest/works/${workId}/comments`, { params })
+export function getEmbContestCommentsApi(workId) {
+  return request.get(`/emb-contest/works/${workId}/comments`)
 }
 
 export function createEmbContestCommentApi(workId, payload) {
   return request.post(`/emb-contest/works/${workId}/comments`, payload)
 }
 
-export function likeEmbContestCommentApi(commentId, payload) {
-  return request.post(`/emb-contest/works/comments/${commentId}/like`, payload)
+export function likeEmbContestCommentApi(commentId) {
+  return request.post(`/emb-contest/works/comments/${commentId}/like`)
 }
