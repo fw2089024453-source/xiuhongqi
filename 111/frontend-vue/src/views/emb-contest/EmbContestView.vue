@@ -28,10 +28,7 @@ const currentCategory = ref('all')
 const currentPage = ref(1)
 const pageSize = 8
 
-const overview = ref({
-  works: 0,
-  votes: 0,
-})
+const overview = ref({ works: 0, votes: 0 })
 const categoriesStats = ref([])
 const latestWorks = ref([])
 const topWorks = ref([])
@@ -45,7 +42,7 @@ const currentSlide = ref(0)
 const submitForm = reactive({
   title: '',
   phone: '',
-  category: '传统刺绣',
+  category: '传统绣作',
   description: '',
   images: [],
 })
@@ -54,12 +51,12 @@ const commentForm = reactive({
   content: '',
 })
 
-const categoryOptions = ['all', '传统刺绣', '创意剪纸', '数字绘画', '综合材料']
+const categoryOptions = ['all', '传统绣作', '基础练习', '主题创作', '创意延展', '综合材料']
 
 const summaryCards = computed(() => [
-  { label: '已公开作品', value: overview.value.works, hint: '当前已通过审核并公开展示的绣红旗作品' },
-  { label: '累计票数', value: overview.value.votes, hint: '所有作品累计获得的有效投票数' },
-  { label: '榜单作品', value: topWorks.value.length, hint: '当前出现在排行榜中的优秀作品' },
+  { label: '公开作品', value: overview.value.works, hint: '已经通过审核并参与前台展示的绣红旗作品。' },
+  { label: '累计票数', value: overview.value.votes, hint: '当前所有公开作品获得的有效投票总数。' },
+  { label: '榜单作品', value: topWorks.value.length, hint: '进入榜单展示区的优秀作品数量。' },
 ])
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
@@ -104,7 +101,7 @@ function onImagesChange(file, files) {
 function resetSubmitForm() {
   submitForm.title = ''
   submitForm.phone = authStore.user?.phone || ''
-  submitForm.category = '传统刺绣'
+  submitForm.category = '传统绣作'
   submitForm.description = ''
   submitForm.images = []
 }
@@ -183,9 +180,9 @@ async function handleVote(work) {
 
   try {
     const result = await voteEmbContestWorkApi(work.id)
-
     ElMessage.success(result.message || '投票成功')
     await Promise.all([loadOverview(), loadWorks()])
+
     if (detailVisible.value && currentWork.value?.id === work.id) {
       await openDetail(work.id)
     }
@@ -305,8 +302,8 @@ onMounted(() => {
         <span class="ec-kicker">EMB CONTEST</span>
         <h1>绣红旗大赛</h1>
         <p>
-          这一页承接旧站的图片作品征集、评选和展示流程。
-          现在已经切到新的 Vue 页面和结构化接口，更适合后续云端部署和后台审核扩展。
+          这一页承接图片作品征集、前台评选、榜单展示和评论互动。
+          页面现在更适合做整站演示，也方便后续继续补充后台审核与赛事运营能力。
         </p>
       </div>
     </section>
@@ -324,7 +321,7 @@ onMounted(() => {
         <div class="ec-card__header">
           <div>
             <h2>赛事内容中心</h2>
-            <p>先把前台核心链路打通，后面再接后台审核和更细的赛事管理流程。</p>
+            <p>先把前台投稿、展示、投票和评论链路整理清楚，方便继续补后台管理。</p>
           </div>
           <el-button :loading="loading" @click="loadPageData">刷新数据</el-button>
         </div>
@@ -343,8 +340,8 @@ onMounted(() => {
               />
             </el-select>
             <el-radio-group v-model="currentSort">
-              <el-radio-button label="hot">最高热度</el-radio-button>
-              <el-radio-button label="new">最新发布</el-radio-button>
+              <el-radio-button value="hot">最高热度</el-radio-button>
+              <el-radio-button value="new">最新发布</el-radio-button>
             </el-radio-group>
             <el-button type="danger" @click="currentPage = 1; loadWorks()">筛选</el-button>
           </div>
@@ -393,7 +390,7 @@ onMounted(() => {
           <div class="ec-submit-shell">
             <section class="ec-submit-intro">
               <h3>提交我的作品</h3>
-              <p>登录后可以提交多图作品，作品将进入后台审核，通过后会出现在在线评选区。</p>
+              <p>登录后可以提交多图作品，作品会先进入后台审核，审核通过后再出现在公开评选区。</p>
               <el-alert
                 type="warning"
                 :closable="false"
@@ -410,13 +407,10 @@ onMounted(() => {
               </el-form-item>
               <el-form-item label="参赛组别">
                 <el-select v-model="submitForm.category" style="width: 100%">
-                  <el-option label="传统刺绣" value="传统刺绣" />
-                  <el-option label="创意剪纸" value="创意剪纸" />
-                  <el-option label="数字绘画" value="数字绘画" />
-                  <el-option label="综合材料" value="综合材料" />
+                  <el-option v-for="item in categoryOptions.filter((item) => item !== 'all')" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="创作理念">
+              <el-form-item label="创作说明">
                 <el-input v-model="submitForm.description" type="textarea" :rows="5" maxlength="500" show-word-limit />
               </el-form-item>
               <el-form-item label="作品图片">
@@ -459,14 +453,14 @@ onMounted(() => {
 
         <el-tab-pane label="赛事概览" name="stats">
           <div class="ec-stats-shell">
-            <section class="ec-latest">
+            <section class="ec-panel">
               <header class="ec-block-header">
                 <div>
                   <h3>最新公开作品</h3>
-                  <p>用于替代旧站的动态公告和赛况更新区。</p>
+                  <p>适合快速查看最近更新到前台的作品，方便联调首页和赛事页展示。</p>
                 </div>
               </header>
-              <el-empty v-if="!latestWorks.length && !loading" description="当前还没有公开作品动态" />
+              <el-empty v-if="!latestWorks.length && !loading" description="当前还没有最新作品动态" />
               <div v-else class="ec-latest-list">
                 <article v-for="item in latestWorks" :key="item.id" class="ec-latest-item">
                   <div class="ec-latest-item__meta">
@@ -479,11 +473,11 @@ onMounted(() => {
               </div>
             </section>
 
-            <section class="ec-category-stats">
+            <section class="ec-panel">
               <header class="ec-block-header">
                 <div>
                   <h3>赛区分布</h3>
-                  <p>当前公开作品按赛区的分布情况。</p>
+                  <p>按分类查看当前公开作品的分布情况，方便做运营补量判断。</p>
                 </div>
               </header>
               <el-empty v-if="!categoriesStats.length && !loading" description="当前还没有赛区统计数据" />
@@ -513,6 +507,7 @@ onMounted(() => {
               <button v-if="currentImages.length > 1" class="ec-gallery__nav is-prev" @click="goPrev">‹</button>
               <button v-if="currentImages.length > 1" class="ec-gallery__nav is-next" @click="goNext">›</button>
             </div>
+
             <div v-if="currentImages.length > 1" class="ec-gallery__thumbs">
               <button
                 v-for="(image, index) in currentImages"
@@ -542,7 +537,7 @@ onMounted(() => {
             <header class="ec-block-header">
               <div>
                 <h3>评论区</h3>
-                <p>欢迎留下你对作品的看法和建议。</p>
+                <p>欢迎留下你对作品的看法、建议和支持。</p>
               </div>
             </header>
 
@@ -595,7 +590,7 @@ onMounted(() => {
   border-radius: 28px;
   background:
     radial-gradient(circle at top left, rgba(217, 119, 6, 0.24), transparent 24%),
-    linear-gradient(135deg, #6b21a8 0%, #9f1239 44%, #7c2d12 100%);
+    linear-gradient(135deg, #7f1d1d 0%, #9f1239 44%, #7c2d12 100%);
   color: #fff7ed;
 }
 
@@ -632,7 +627,8 @@ onMounted(() => {
 .ec-rank-card,
 .ec-latest-item,
 .ec-category-item,
-.ec-comment-item {
+.ec-comment-item,
+.ec-panel {
   border-radius: 24px;
   border: 1px solid #f0dce1;
   background: rgba(255, 255, 255, 0.95);
@@ -671,7 +667,8 @@ onMounted(() => {
 .ec-work-card__footer,
 .ec-work-card__actions,
 .ec-detail__meta,
-.ec-comment-item__header {
+.ec-comment-item__header,
+.ec-latest-item__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -722,6 +719,10 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.ec-stats-shell {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .ec-work-card,
 .ec-rank-card {
   overflow: hidden;
@@ -749,19 +750,22 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #9ca3af;
+  font-size: 14px;
 }
 
 .ec-work-card__body,
 .ec-rank-card__body,
 .ec-latest-item,
 .ec-category-item,
-.ec-comment-item {
+.ec-comment-item,
+.ec-panel {
   padding: 18px;
 }
 
 .ec-work-card__footer,
 .ec-detail__meta,
-.ec-comment-item__header {
+.ec-comment-item__header,
+.ec-latest-item__meta {
   color: #8a8f98;
   font-size: 13px;
 }
@@ -777,7 +781,6 @@ onMounted(() => {
 }
 
 .ec-submit-shell,
-.ec-stats-shell,
 .ec-detail {
   display: grid;
   grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
@@ -786,8 +789,6 @@ onMounted(() => {
 
 .ec-submit-intro,
 .ec-submit-form,
-.ec-latest,
-.ec-category-stats,
 .ec-detail__info,
 .ec-comments {
   padding: 24px;
@@ -913,7 +914,6 @@ onMounted(() => {
 
   .ec-card__header,
   .ec-submit-shell,
-  .ec-stats-shell,
   .ec-detail {
     grid-template-columns: 1fr;
   }

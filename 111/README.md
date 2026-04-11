@@ -39,11 +39,11 @@ Still to finish:
 .
 |-- config/            # server config and database connection
 |-- data/              # SQL schema and local data helpers
+|-- docs/              # deployment and handover documents
 |-- frontend-vue/      # Vue frontend app
 |-- public/            # static assets and uploaded files
 |-- server/            # Express routes and middleware
 |-- docker-compose.yml # local database helper
-|-- init_db.sql        # legacy initialization script
 ```
 
 ## Environment Setup
@@ -124,7 +124,35 @@ Root shortcut:
 npm run build
 ```
 
+## Demo Content
+
+After the schema and base seed are ready, you can load a full set of showcase data with:
+
+```bash
+npm run seed:demo
+```
+
+What this script does:
+
+- Fills red culture, public welfare, skill teaching, interaction, contact, and contest modules with reusable demo content
+- Reuses existing active admin/user accounts when available
+- Automatically creates fallback demo accounts when the database is still empty enough that content seeding would fail
+- Runs in an idempotent way so it can be executed again to refresh the same demo records
+
+Fallback demo accounts created by the script when needed:
+
+- Admin: `demo_admin` / `Demo#2026`
+- User: `demo_user` / `Demo#2026`
+
+The script also seeds forum replies, forum comments, interaction messages, event registrations, and contact message samples so the public pages and admin-side operations views do not look empty during review.
+
 ## Deployment Notes
+
+Detailed production deployment steps are documented in:
+
+- [docs/deployment.md](C:/Users/20892/Desktop/111/docs/deployment.md)
+- [docs/project-inventory.md](C:/Users/20892/Desktop/111/docs/project-inventory.md)
+- [docs/next-session-handover.md](C:/Users/20892/Desktop/111/docs/next-session-handover.md)
 
 Recommended deployment path:
 

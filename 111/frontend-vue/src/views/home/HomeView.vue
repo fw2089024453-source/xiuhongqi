@@ -23,62 +23,62 @@ const announcements = ref([])
 const quickEntrances = [
   {
     title: '绣红旗大赛',
-    desc: '优先承接最核心的作品征集、展示、投票与审核链路。',
+    desc: '承接图片作品征集、展示、投票和评论互动，是当前最适合优先打磨的核心场景之一。',
     path: '/emb-contest',
-    button: '进入作品区',
+    button: '进入大赛',
     featured: true,
   },
   {
     title: '视频大赛',
-    desc: '面向视频投稿、排行榜、评论互动和专题展示。',
+    desc: '支持视频投稿、作品榜单、评论互动和主题传播，适合联调投稿与审核流程。',
     path: '/video-contest',
     button: '查看赛事',
   },
   {
     title: '红旗文化',
-    desc: '承接历史、精神、故事等内容型页面，适合打造平台气质。',
+    desc: '展示红旗故事、历史节点与精神语录，承担平台内容气质与品牌感知的建立。',
     path: '/red-culture',
     button: '阅读内容',
   },
   {
     title: '公益纪实',
-    desc: '覆盖公益活动、志愿者人物和发展历程。',
+    desc: '覆盖公益活动、志愿者故事与发展历程，适合展示平台的社会价值与参与感。',
     path: '/public-welfare',
     button: '查看纪实',
   },
   {
     title: '技艺教学',
-    desc: '组织课程、章节、资源下载和学员作品展示。',
+    desc: '组织课程、教学资源、精选课程和学员作品展示，方便后续做正式运营录入。',
     path: '/skill-teaching',
     button: '进入教学',
   },
   {
     title: '互动交流',
-    desc: '承接论坛、留言和活动报名，后续可继续做社区化。',
+    desc: '承接论坛话题、留言广场和活动报名，支撑平台社区化和活跃度测试。',
     path: '/interaction',
-    button: '进入社区',
+    button: '进入互动',
   },
 ]
 
 const stageChecklist = [
-  '前端已迁移到 Vue，新旧接口保持兼容。',
-  '数据库结构已基本对齐，旧遗留表名正在收口。',
-  '后台首页与公告链路已打通，适合继续扩展审核能力。',
-  '后续会按云端部署思路整理环境变量、上传和生产配置。',
+  '前端主体结构已经迁到 Vue，并接入真实接口。',
+  '后台已补上红旗文化、公益纪实、技艺教学三块内容管理。',
+  '当前优先目标是页面更顺眼、内容不空、核心链路可测。',
+  '后续继续推进回归测试、上传方案和云端部署收口。',
 ]
 
 const deploymentHighlights = [
   {
-    title: '先建立稳定前台',
-    desc: '界面统一后，功能补齐与联调成本会明显下降，不会边做边返工。',
+    title: '先把前台做顺眼',
+    desc: '界面感受稳定以后，补数据和跑测试的效率会更高，也更容易发现真实问题。',
   },
   {
     title: '继续沿用现有后端',
-    desc: '当前阶段不急着重构服务端，先保证接口稳定和数据一致。',
+    desc: '当前阶段不急着大改服务端，优先保证接口稳定、数据库一致和录入链路能跑通。',
   },
   {
-    title: '从现在就按云端思路开发',
-    desc: '环境变量、数据库脚本、文件上传和部署入口都要逐步收口。',
+    title: '从现在就按云端思路推进',
+    desc: '环境变量、数据库脚本、上传目录和部署入口都逐步收口，避免后面返工。',
   },
 ]
 
@@ -96,18 +96,18 @@ const projectFacts = computed(() => [
     hint: backendTimestamp.value ? `最近检查：${formatDate(backendTimestamp.value)}` : '通过 /api/health 获取',
   },
   {
-    label: '当前目标',
-    value: '统一界面骨架',
-    hint: '先让前后台像一个完整产品，再继续补功能和优化代码。',
+    label: '当前重点',
+    value: '可视优化 + 演示内容',
+    hint: '先让平台看起来完整可用，再继续细化功能和回归测试。',
   },
 ])
 
 const statCards = computed(() => [
   { label: '注册用户', value: overview.value.users, hint: '数据库中的用户总量' },
-  { label: '文化内容', value: overview.value.culture, hint: '可展示的红旗文化内容' },
-  { label: '公益项目', value: overview.value.welfare, hint: '公益活动与纪实条目' },
-  { label: '教学课程', value: overview.value.courses, hint: '当前课程资源数量' },
-  { label: '社区话题', value: overview.value.topics, hint: '互动交流中的话题总数' },
+  { label: '文化内容', value: overview.value.culture, hint: '红旗文化板块可展示内容' },
+  { label: '公益项目', value: overview.value.welfare, hint: '公益活动与纪实条目数' },
+  { label: '教学课程', value: overview.value.courses, hint: '当前课程与教学内容数量' },
+  { label: '社区话题', value: overview.value.topics, hint: '互动交流中的有效话题数' },
 ])
 
 function formatCategory(category) {
@@ -160,7 +160,7 @@ async function loadOverview() {
     overview.value = overviewResult.data.overview
     latestUpdates.value = overviewResult.data.latest || []
     announcements.value = (announcementsResult.data || []).slice(0, 3)
-  } catch (error) {
+  } catch {
     latestUpdates.value = []
     announcements.value = []
   } finally {
@@ -179,14 +179,15 @@ onMounted(() => {
     <section class="hero-panel">
       <div class="hero-panel__content">
         <p class="section-kicker">PLATFORM REBUILD</p>
-        <h1>让“绣红旗”先成为一个稳定、清晰、能承载功能的成品前台</h1>
+        <h1>先把平台做成“看得舒服、点得清楚、内容不空”的可用版本</h1>
         <p class="hero-panel__desc">
-          这一版不急着继续堆新页面，而是先把首页、导航、后台入口和信息层级统一起来。等页面骨架稳定后，我们再继续补赛事、审核、内容发布和云端部署能力。
+          这一阶段不再只堆功能骨架，而是优先把首页、导航、内容呈现和后台录入能力统一起来。
+          页面观感稳定后，后面的回归测试、内容补录和云端部署收口都会顺很多。
         </p>
 
         <div class="hero-panel__actions">
-          <el-button type="danger" size="large" @click="$router.push('/emb-contest')">先看核心赛事</el-button>
-          <el-button size="large" @click="$router.push('/admin')">查看后台首页</el-button>
+          <el-button type="danger" @click="$router.push('/emb-contest')">先看核心赛事</el-button>
+          <el-button plain @click="$router.push('/admin')">进入后台录入内容</el-button>
         </div>
 
         <div class="hero-panel__metrics">
@@ -221,7 +222,7 @@ onMounted(() => {
           <p class="status-card__kicker">DEPLOYMENT</p>
           <h2>部署准备</h2>
           <p class="status-card__desc">
-            当前我们先把界面和业务链路做稳，后续会继续收口数据库脚本、生产构建、文件上传和对象存储方案。
+            当前先把页面和业务链路做稳，后续继续完善数据库脚本、生产构建、上传持久化和对象存储方案。
           </p>
         </el-card>
       </div>
@@ -231,7 +232,7 @@ onMounted(() => {
       <div class="section-heading">
         <p class="section-kicker">DATA SNAPSHOT</p>
         <h2>首页实时概览</h2>
-        <p>这部分直接读取当前数据库，不依赖旧静态页面，能帮助我们判断平台内容是否已经具备呈现基础。</p>
+        <p>这部分直接读取当前数据库，可以快速判断哪些板块已经不空、哪些板块还需要继续补内容。</p>
       </div>
 
       <el-skeleton :loading="overviewLoading" animated>
@@ -259,7 +260,7 @@ onMounted(() => {
       <div class="section-heading">
         <p class="section-kicker">QUICK ENTRANCES</p>
         <h2>核心模块入口</h2>
-        <p>先让核心业务区有明确入口和清晰定位，后面每个模块再分别做细化交互和功能补完。</p>
+        <p>每个入口都对应一条真实业务链路，现在优先让它们看得清、点得顺、打开后有内容可看。</p>
       </div>
 
       <div class="entrance-grid">
@@ -270,11 +271,15 @@ onMounted(() => {
           :class="{ 'entrance-card--featured': item.featured }"
         >
           <div class="entrance-card__top">
-            <span v-if="item.featured" class="entrance-card__badge">优先完成</span>
+            <span v-if="item.featured" class="entrance-card__badge">优先完善</span>
             <h3>{{ item.title }}</h3>
           </div>
           <p>{{ item.desc }}</p>
-          <el-button :type="item.featured ? 'danger' : 'default'" @click="$router.push(item.path)">
+          <el-button
+            class="entrance-card__button"
+            :type="item.featured ? 'danger' : 'default'"
+            @click="$router.push(item.path)"
+          >
             {{ item.button }}
           </el-button>
         </article>
@@ -286,7 +291,7 @@ onMounted(() => {
         <div class="section-heading section-heading--compact">
           <p class="section-kicker">ANNOUNCEMENTS</p>
           <h2>平台公告</h2>
-          <p>公告已经和后台打通，适合作为首页和运营侧联动的第一条稳定链路。</p>
+          <p>公告已经和后台打通，适合做首页与运营侧联动的稳定入口。</p>
         </div>
 
         <el-empty v-if="!announcements.length" description="当前还没有公告内容" />
@@ -309,7 +314,7 @@ onMounted(() => {
         <div class="section-heading section-heading--compact">
           <p class="section-kicker">LATEST UPDATES</p>
           <h2>最新内容变动</h2>
-          <p>这些内容来自当前数据库，能帮助我们判断后面要优先完善哪些内容页和详情页。</p>
+          <p>这些内容来自当前数据库，能帮助判断平台哪些模块已经具备展示基础。</p>
         </div>
 
         <el-empty v-if="!latestUpdates.length" description="当前数据库里还没有可展示的最新动态" />
@@ -321,7 +326,7 @@ onMounted(() => {
               <span>{{ formatDate(item.created_at) }}</span>
             </div>
             <h3>{{ item.title }}</h3>
-            <p>后续会把这部分继续细化到对应模块的列表、详情和后台发布流转中。</p>
+            <p>该模块已经有内容沉淀，后续可以继续完善列表页、详情页与后台运营流程。</p>
           </article>
         </div>
       </el-card>
@@ -331,7 +336,7 @@ onMounted(() => {
       <div class="section-heading">
         <p class="section-kicker">CLOUD READY</p>
         <h2>从现在开始按云端思路继续升级</h2>
-        <p>界面不是终点，但它会影响后续所有功能的可感知质量。我们会在这个基线上继续往审核、发布和部署演进。</p>
+        <p>观感不是终点，但它会显著影响后续测试效率和交付质量。现在这个版本，就是继续补功能和部署的基础线。</p>
       </div>
 
       <div class="deployment-grid">
@@ -353,7 +358,7 @@ onMounted(() => {
 
 .hero-panel {
   display: grid;
-  grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.84fr);
+  grid-template-columns: minmax(0, 1.3fr) minmax(300px, 0.82fr);
   gap: 20px;
 }
 
@@ -361,14 +366,14 @@ onMounted(() => {
 .section-block,
 .split-card {
   border: 1px solid rgba(234, 217, 199, 0.92);
-  border-radius: 32px;
+  border-radius: 30px;
   background: rgba(255, 251, 246, 0.88);
   box-shadow: var(--xhq-shadow-md);
   backdrop-filter: blur(16px);
 }
 
 .hero-panel__content {
-  padding: 40px;
+  padding: 34px;
   background:
     radial-gradient(circle at top right, rgba(246, 228, 198, 0.26), transparent 26%),
     linear-gradient(135deg, #651417 0%, #8f1e20 52%, #b67831 100%);
@@ -379,30 +384,30 @@ onMounted(() => {
   max-width: 920px;
   margin: 10px 0 14px;
   font-family: "Source Han Serif SC", "STSong", "SimSun", serif;
-  font-size: clamp(34px, 5vw, 58px);
-  line-height: 1.08;
+  font-size: clamp(32px, 5vw, 54px);
+  line-height: 1.1;
 }
 
 .hero-panel__desc {
   max-width: 760px;
   margin: 0;
   color: rgba(255, 249, 241, 0.9);
-  font-size: 16px;
-  line-height: 1.9;
+  font-size: 15px;
+  line-height: 1.85;
 }
 
 .hero-panel__actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 28px;
+  gap: 10px;
+  margin-top: 24px;
 }
 
 .hero-panel__metrics {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin-top: 28px;
+  gap: 12px;
+  margin-top: 24px;
 }
 
 .hero-panel__aside {
@@ -411,7 +416,7 @@ onMounted(() => {
 }
 
 .status-card {
-  border-radius: 32px;
+  border-radius: 28px;
   background: rgba(255, 251, 246, 0.9);
 }
 
@@ -441,7 +446,7 @@ onMounted(() => {
 .section-heading h2 {
   margin: 8px 0 0;
   font-family: "Source Han Serif SC", "STSong", "SimSun", serif;
-  font-size: clamp(26px, 4vw, 36px);
+  font-size: clamp(24px, 4vw, 34px);
   line-height: 1.2;
   color: var(--xhq-primary-deep);
 }
@@ -461,7 +466,7 @@ onMounted(() => {
 
 .status-list {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin: 0;
   padding-left: 18px;
   color: var(--xhq-text-muted);
@@ -470,7 +475,7 @@ onMounted(() => {
 
 .section-block,
 .split-card {
-  padding: 30px;
+  padding: 28px;
 }
 
 .section-block--warm {
@@ -480,7 +485,7 @@ onMounted(() => {
 }
 
 .section-heading {
-  margin-bottom: 22px;
+  margin-bottom: 20px;
 }
 
 .section-heading--compact h2 {
@@ -518,9 +523,9 @@ onMounted(() => {
 .announcement-card,
 .update-card,
 .deployment-card {
-  border-radius: 24px;
+  border-radius: 22px;
   border: 1px solid #eadfce;
-  background: rgba(255, 255, 255, 0.82);
+  background: rgba(255, 255, 255, 0.84);
 }
 
 .fact-card,
@@ -543,7 +548,7 @@ onMounted(() => {
 .stat-card strong {
   display: block;
   margin: 8px 0 6px;
-  font-size: 28px;
+  font-size: 26px;
 }
 
 .fact-card strong {
@@ -566,8 +571,8 @@ onMounted(() => {
 .entrance-card {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  padding: 22px;
+  gap: 12px;
+  padding: 20px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.94), rgba(253, 247, 241, 0.88));
 }
 
@@ -581,17 +586,22 @@ onMounted(() => {
 .entrance-card__top {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .entrance-card__badge {
   width: fit-content;
-  padding: 6px 12px;
+  padding: 5px 10px;
   border-radius: 999px;
   background: var(--xhq-primary);
   color: #fff;
   font-size: 12px;
   font-weight: 700;
+}
+
+.entrance-card__button {
+  width: fit-content;
+  margin-top: auto;
 }
 
 .entrance-card h3,
@@ -615,7 +625,7 @@ onMounted(() => {
 
 .announcement-card,
 .update-card {
-  padding: 20px;
+  padding: 18px;
 }
 
 .announcement-card__meta,
@@ -651,6 +661,10 @@ onMounted(() => {
   .hero-panel__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .entrance-card__button {
+    width: 100%;
   }
 }
 </style>

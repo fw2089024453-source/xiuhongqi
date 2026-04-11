@@ -12,10 +12,10 @@ const menuItems = [
   { path: '/', label: '首页', summary: '平台总览' },
   { path: '/video-contest', label: '视频大赛', summary: '投稿与投票' },
   { path: '/emb-contest', label: '绣红旗大赛', summary: '作品展示' },
-  { path: '/red-culture', label: '红旗文化', summary: '内容传播' },
-  { path: '/public-welfare', label: '公益纪实', summary: '活动与历程' },
+  { path: '/red-culture', label: '红旗文化', summary: '故事与精神' },
+  { path: '/public-welfare', label: '公益纪实', summary: '活动与志愿' },
   { path: '/skill-teaching', label: '技艺教学', summary: '课程与资源' },
-  { path: '/interaction', label: '互动交流', summary: '社区与活动' },
+  { path: '/interaction', label: '互动交流', summary: '论坛与活动' },
   { path: '/contact', label: '联系我们', summary: '合作反馈' },
 ]
 
@@ -41,15 +41,15 @@ function handleLogout() {
 <template>
   <div class="app-shell">
     <div class="shell-ribbon">
-      <span>云端部署准备中</span>
-      <span>现阶段优先统一界面、稳定功能、保留旧接口兼容</span>
+      <span>当前先把页面做顺眼、做完整，再逐步补足回归测试和云端部署</span>
+      <span>前台展示、后台录入、样例数据会并行完善，方便整体演示</span>
     </div>
 
     <header class="shell-header">
       <div class="shell-header__brand" @click="navigateTo('/')">
         <p class="brand-kicker">XIU HONG QI</p>
         <div class="brand-title">绣红旗数字平台</div>
-        <p class="brand-subtitle">非遗传承、赛事运营、内容传播的一体化前台</p>
+        <p class="brand-subtitle">把非遗传承、赛事运营、内容传播和互动交流整合到同一套前后台中</p>
       </div>
 
       <nav class="shell-nav" aria-label="主导航">
@@ -89,10 +89,11 @@ function handleLogout() {
       <div class="footer-card">
         <div>
           <p class="footer-kicker">NEXT STEP</p>
-          <h3>前端先成型，再做精简与云端收口</h3>
+          <h3>先把页面做好看，再把链路测扎实</h3>
         </div>
         <p>
-          当前版本以 Vue 前台为主，保留现有后端与数据库结构。后续会继续补齐后台审核、对象存储适配和生产部署配置。
+          当前版本的重点是让前台看起来像一个完整平台，而不是只有骨架的半成品。
+          接下来会继续补真实内容、跑完整回归测试，并把云端部署所需的文档与配置收口。
         </p>
       </div>
     </footer>
@@ -117,24 +118,24 @@ function handleLogout() {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 22px;
+  padding: 10px 18px;
   color: #fff5eb;
-  font-size: 13px;
+  font-size: 12px;
   background: linear-gradient(90deg, rgba(103, 18, 21, 0.96), rgba(152, 27, 30, 0.92));
-  border-radius: 24px;
+  border-radius: 20px;
   box-shadow: var(--xhq-shadow-md);
 }
 
 .shell-header {
   display: grid;
-  grid-template-columns: 280px minmax(0, 1fr) 280px;
-  gap: 20px;
+  grid-template-columns: 250px minmax(0, 1fr) 240px;
+  gap: 16px;
   align-items: start;
-  margin-top: 16px;
-  padding: 22px;
+  margin-top: 14px;
+  padding: 18px;
   border: 1px solid rgba(234, 217, 199, 0.9);
-  border-radius: 34px;
-  background: rgba(255, 251, 246, 0.86);
+  border-radius: 30px;
+  background: rgba(255, 251, 246, 0.88);
   box-shadow: var(--xhq-shadow-lg);
   backdrop-filter: blur(18px);
 }
@@ -147,7 +148,7 @@ function handleLogout() {
 .footer-kicker {
   margin: 0;
   color: var(--xhq-accent);
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 2px;
 }
@@ -155,7 +156,7 @@ function handleLogout() {
 .brand-title {
   margin-top: 8px;
   font-family: "Source Han Serif SC", "STSong", "SimSun", serif;
-  font-size: 30px;
+  font-size: 28px;
   line-height: 1.1;
   color: var(--xhq-primary-deep);
 }
@@ -163,25 +164,28 @@ function handleLogout() {
 .brand-subtitle {
   margin: 10px 0 0;
   color: var(--xhq-text-muted);
-  line-height: 1.7;
+  line-height: 1.65;
+  font-size: 13px;
 }
 
 .shell-nav {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .shell-nav__item {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 6px;
-  padding: 16px 18px;
+  justify-content: center;
+  gap: 4px;
+  min-height: 72px;
+  padding: 12px 14px;
   text-align: left;
   border: 1px solid #eee0d2;
-  border-radius: 22px;
-  background: rgba(255, 255, 255, 0.72);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.76);
   color: var(--xhq-text);
   cursor: pointer;
   transition:
@@ -192,20 +196,22 @@ function handleLogout() {
 }
 
 .shell-nav__item strong {
-  font-size: 15px;
+  font-size: 14px;
+  line-height: 1.25;
 }
 
 .shell-nav__item span {
   color: var(--xhq-text-soft);
-  font-size: 12px;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .shell-nav__item:hover,
 .shell-nav__item--active {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
   border-color: #d7b190;
   background: linear-gradient(180deg, rgba(255, 250, 245, 0.98), rgba(251, 241, 229, 0.92));
-  box-shadow: 0 18px 26px rgba(143, 86, 44, 0.08);
+  box-shadow: 0 12px 20px rgba(143, 86, 44, 0.08);
 }
 
 .shell-nav__item--active strong {
@@ -215,13 +221,13 @@ function handleLogout() {
 .shell-header__actions {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .user-chip {
-  padding: 16px 18px;
+  padding: 14px 16px;
   border: 1px solid #eadfce;
-  border-radius: 22px;
+  border-radius: 18px;
   background: linear-gradient(180deg, rgba(255, 253, 250, 0.96), rgba(252, 244, 234, 0.94));
 }
 
@@ -235,31 +241,32 @@ function handleLogout() {
   display: block;
   margin-top: 6px;
   color: var(--xhq-primary-deep);
-  font-size: 18px;
+  font-size: 17px;
 }
 
 .action-buttons {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: 8px;
+  justify-content: flex-end;
 }
 
 .shell-main {
   width: min(1400px, calc(100vw - 36px));
-  margin: 22px auto 0;
+  margin: 18px auto 0;
 }
 
 .shell-footer {
-  padding: 18px 0 28px;
+  padding: 16px 0 28px;
 }
 
 .footer-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 28px;
-  padding: 24px 28px;
-  border-radius: 30px;
+  gap: 24px;
+  padding: 20px 24px;
+  border-radius: 26px;
   border: 1px solid rgba(234, 217, 199, 0.9);
   background: rgba(255, 250, 244, 0.9);
   box-shadow: var(--xhq-shadow-md);
@@ -267,7 +274,7 @@ function handleLogout() {
 
 .footer-card h3 {
   margin: 8px 0 0;
-  font-size: 24px;
+  font-size: 22px;
   color: var(--xhq-primary-deep);
 }
 
@@ -312,21 +319,20 @@ function handleLogout() {
   }
 
   .shell-header {
-    padding: 18px;
-    border-radius: 26px;
-  }
-
-  .shell-nav,
-  .shell-header__actions {
-    grid-template-columns: 1fr;
+    padding: 16px;
+    border-radius: 24px;
   }
 
   .shell-nav {
-    display: grid;
+    grid-template-columns: 1fr;
   }
 
   .shell-header__actions {
     flex-direction: column;
+  }
+
+  .action-buttons {
+    justify-content: flex-start;
   }
 }
 </style>

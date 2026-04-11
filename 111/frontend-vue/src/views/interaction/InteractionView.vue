@@ -80,10 +80,10 @@ const eventForm = reactive({
 const isLoggedIn = computed(() => authStore.isLoggedIn)
 
 const summaryCards = computed(() => [
-  { label: '论坛分区', value: summary.value.sections, hint: '按主题组织的交流入口' },
-  { label: '公开话题', value: summary.value.topics, hint: '当前可访问的话题数量' },
-  { label: '留言动态', value: summary.value.messages, hint: '用户在留言墙发布的内容' },
-  { label: '报名活动', value: summary.value.events, hint: '当前可报名参与的活动' },
+  { label: '论坛分区', value: summary.value.sections, hint: '按主题组织的交流入口数量。' },
+  { label: '公开话题', value: summary.value.topics, hint: '当前前台可访问的话题总数。' },
+  { label: '留言动态', value: summary.value.messages, hint: '留言墙中已经公开展示的内容数量。' },
+  { label: '报名活动', value: summary.value.events, hint: '当前开放报名的互动活动数量。' },
 ])
 
 const filteredTopics = computed(() => {
@@ -105,6 +105,15 @@ function formatDate(value) {
 function shortText(value, max = 90) {
   if (!value) return '暂无内容简介'
   return value.length > max ? `${value.slice(0, max)}...` : value
+}
+
+function formatLatestCategory(value) {
+  const map = {
+    topic: '论坛话题',
+    message: '留言动态',
+    event: '活动报名',
+  }
+  return map[value] || '互动动态'
 }
 
 function resetTopicForm() {
@@ -230,7 +239,7 @@ async function submitTopic() {
 
 async function submitPost() {
   if (!isLoggedIn.value) {
-    ElMessage.warning('请先登录后再发布帖子')
+    ElMessage.warning('请先登录后再发布回帖')
     return
   }
 
@@ -240,7 +249,7 @@ async function submitPost() {
   }
 
   if (!postForm.content.trim()) {
-    ElMessage.warning('请填写帖子内容')
+    ElMessage.warning('请填写回帖内容')
     return
   }
 
@@ -253,14 +262,14 @@ async function submitPost() {
     if (postForm.image) payload.append('image', postForm.image)
 
     await createForumPostApi(selectedTopic.value.id, payload)
-    ElMessage.success('帖子发布成功')
+    ElMessage.success('回帖发布成功')
     postDialogVisible.value = false
     resetPostForm()
     await openTopic(selectedTopic.value)
     await loadOverview()
     await loadForum()
   } catch (error) {
-    ElMessage.error(error.message || '帖子发布失败')
+    ElMessage.error(error.message || '回帖发布失败')
   } finally {
     submittingPost.value = false
   }
@@ -273,7 +282,7 @@ async function submitComment() {
   }
 
   if (!selectedPost.value) {
-    ElMessage.warning('请先选择一条帖子')
+    ElMessage.warning('请先选择一条回帖')
     return
   }
 
@@ -285,16 +294,17 @@ async function submitComment() {
   submittingComment.value = true
 
   try {
+    const currentPostId = selectedPost.value.id
+
     await createForumCommentApi(selectedPost.value.id, {
       content: commentForm.content.trim(),
     })
+
     commentForm.content = ''
     ElMessage.success('评论发布成功')
     await openTopic(selectedTopic.value)
-    const updatedPost = selectedTopic.value?.posts?.find((item) => item.id === selectedPost.value.id)
-    if (updatedPost) {
-      await openPost(updatedPost)
-    }
+    const updatedPost = selectedTopic.value?.posts?.find((item) => item.id === currentPostId)
+    if (updatedPost) await openPost(updatedPost)
   } catch (error) {
     ElMessage.error(error.message || '评论发布失败')
   } finally {
@@ -417,8 +427,8 @@ onMounted(() => {
         <span class="ia-kicker">INTERACTION</span>
         <h1>互动交流</h1>
         <p>
-          这一页承接旧站的论坛区、留言墙和活动报名三块核心互动能力。
-          现在已经统一成 Vue 前端和结构化接口，后续做权限、审核和云端部署都会更顺。
+          这一页承接论坛、留言墙和活动报名三块核心互动能力。
+          现在已经整理成统一的前台结构，方便继续补充审核、运营和回归测试。
         </p>
       </div>
     </section>
@@ -433,7 +443,7 @@ onMounted(() => {
 
     <section class="ia-latest">
       <article v-for="item in latest" :key="`${item.category}-${item.id}`" class="ia-latest-card">
-        <div class="ia-latest-card__tag">{{ item.category }}</div>
+        <div class="ia-latest-card__tag">{{ formatLatestCategory(item.category) }}</div>
         <h3>{{ item.title || item.author_name }}</h3>
         <p>{{ shortText(item.content || item.location || item.section_name || item.event_time) }}</p>
         <span>{{ formatDate(item.created_at) }}</span>
@@ -445,7 +455,7 @@ onMounted(() => {
         <div class="ia-card__header">
           <div>
             <h2>互动内容中心</h2>
-            <p>先把社区入口、留言互动和活动报名做通，后面再补后台治理与审核能力。</p>
+            <p>先把社区入口、留言互动和活动报名做通，后面再补后台治理和审核能力。</p>
           </div>
           <div class="ia-card__actions">
             <el-button :loading="loading" @click="loadData">刷新数据</el-button>
@@ -480,7 +490,7 @@ onMounted(() => {
               <header class="ia-block-header">
                 <div>
                   <h3>话题列表</h3>
-                  <p>点击任意话题可查看主贴、回帖与评论</p>
+                  <p>点击左侧任意话题，可以查看主帖、回帖和评论详情。</p>
                 </div>
               </header>
 
@@ -524,21 +534,18 @@ onMounted(() => {
                     <span>作者：{{ selectedTopic.author_name }}</span>
                     <span>创建于：{{ formatDate(selectedTopic.created_at) }}</span>
                   </div>
-                  <el-button type="danger" plain @click="postDialogVisible = true">在这个话题下发帖</el-button>
+                  <el-button type="danger" plain @click="postDialogVisible = true">在这个话题下回帖</el-button>
                 </article>
 
                 <section class="ia-posts">
                   <header class="ia-block-header">
                     <div>
                       <h3>话题回帖</h3>
-                      <p>选择一条回帖后可继续查看评论与点赞互动</p>
+                      <p>选择一条回帖后，可以继续查看评论和点赞互动。</p>
                     </div>
                   </header>
 
-                  <el-empty
-                    v-if="!selectedTopic.posts?.length"
-                    description="当前话题下还没有回帖，欢迎你来发第一条"
-                  />
+                  <el-empty v-if="!selectedTopic.posts?.length" description="当前话题下还没有回帖，欢迎你来发第一条" />
 
                   <div v-else class="ia-post-list">
                     <article
@@ -565,7 +572,7 @@ onMounted(() => {
                   <header class="ia-block-header">
                     <div>
                       <h3>评论区</h3>
-                      <p>{{ selectedPost ? '当前展示所选回帖的评论列表' : '先选择一条回帖，再查看评论' }}</p>
+                      <p>{{ selectedPost ? '当前展示所选回帖的评论列表。' : '先选择一条回帖，再查看评论。' }}</p>
                     </div>
                   </header>
 
@@ -620,7 +627,7 @@ onMounted(() => {
           <div class="ia-message-shell">
             <section class="ia-message-form">
               <h3>发布留言</h3>
-              <p>这里适合发布简短感想、活动反馈或平台建议。</p>
+              <p>这里适合发布简短感想、活动反馈或平台建议，作为更轻量的社区互动入口。</p>
               <el-input
                 v-model="messageForm.content"
                 type="textarea"
@@ -647,7 +654,7 @@ onMounted(() => {
               <header class="ia-block-header">
                 <div>
                   <h3>最新留言</h3>
-                  <p>留言会按时间倒序展示，适合作为社区轻互动入口。</p>
+                  <p>留言按时间倒序展示，适合作为社区轻互动和测试入口。</p>
                 </div>
               </header>
 
@@ -686,7 +693,7 @@ onMounted(() => {
                   <span>{{ item.registration_count || 0 }} 人已报名</span>
                 </div>
                 <div class="ia-event-card__requirements">
-                  {{ item.form_requirements || '报名时请填写真实联系方式与参与说明。' }}
+                  {{ item.form_requirements || '报名时请填写真实联系方式和参与说明。' }}
                 </div>
                 <el-button type="danger" plain @click="openEventDialog(item)">立即报名</el-button>
               </div>
@@ -867,6 +874,7 @@ onMounted(() => {
 .ia-topic-card h4,
 .ia-topic-detail__hero h3,
 .ia-post-card h4,
+.ia-comment-focus h4,
 .ia-message-form h3,
 .ia-event-card h3 {
   margin: 0;
@@ -878,6 +886,7 @@ onMounted(() => {
 .ia-topic-detail__hero p,
 .ia-post-card p,
 .ia-comment-card p,
+.ia-comment-focus p,
 .ia-message-card p,
 .ia-event-card p {
   color: #5f6368;
@@ -964,6 +973,15 @@ onMounted(() => {
 }
 
 .ia-topic-card,
+.ia-post-card {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.ia-topic-card,
 .ia-post-card,
 .ia-comment-focus,
 .ia-comment-card,
@@ -971,15 +989,6 @@ onMounted(() => {
 .ia-message-card,
 .ia-event-card__body {
   padding: 18px;
-}
-
-.ia-topic-card,
-.ia-post-card {
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    border-color 0.2s ease,
-    box-shadow 0.2s ease;
 }
 
 .ia-topic-card:hover,
@@ -1002,7 +1011,8 @@ onMounted(() => {
 .ia-topic-detail__footer,
 .ia-event-card__meta,
 .ia-comment-card__header,
-.ia-message-card__header {
+.ia-message-card__header,
+.ia-post-card__header {
   flex-wrap: wrap;
   color: #8a8f98;
   font-size: 13px;
@@ -1069,6 +1079,7 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #8a8f98;
+  font-size: 14px;
 }
 
 .ia-event-card__body {

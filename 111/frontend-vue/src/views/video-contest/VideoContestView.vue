@@ -28,10 +28,7 @@ const currentCategory = ref('all')
 const currentPage = ref(1)
 const pageSize = 8
 
-const overview = ref({
-  works: 0,
-  votes: 0,
-})
+const overview = ref({ works: 0, votes: 0 })
 const categoriesStats = ref([])
 const latestWorks = ref([])
 const topWorks = ref([])
@@ -44,7 +41,7 @@ const comments = ref([])
 const submitForm = reactive({
   title: '',
   phone: '',
-  category: '历史沿革',
+  category: '红色记忆',
   description: '',
   cover: null,
   video: null,
@@ -54,12 +51,12 @@ const commentForm = reactive({
   content: '',
 })
 
-const categoryOptions = ['all', '历史沿革', '非遗技艺', '红色精神', '时代创新']
+const categoryOptions = ['all', '红色记忆', '非遗传承', '创作记录', '活动纪实', '创意表达']
 
 const summaryCards = computed(() => [
-  { label: '已公开作品', value: overview.value.works, hint: '当前已通过审核并公开展示的视频作品' },
-  { label: '累计票数', value: overview.value.votes, hint: '所有作品累计获得的有效投票数' },
-  { label: '榜单作品', value: topWorks.value.length, hint: '当前出现在排行榜中的公开作品' },
+  { label: '公开作品', value: overview.value.works, hint: '已经审核通过并在前台公开展示的视频作品。' },
+  { label: '累计票数', value: overview.value.votes, hint: '当前所有公开作品获得的有效投票总数。' },
+  { label: '榜单作品', value: topWorks.value.length, hint: '进入当前排行榜展示区的作品数量。' },
 ])
 
 const isLoggedIn = computed(() => authStore.isLoggedIn)
@@ -91,7 +88,7 @@ function onVideoChange(file) {
 function resetSubmitForm() {
   submitForm.title = ''
   submitForm.phone = authStore.user?.phone || ''
-  submitForm.category = '历史沿革'
+  submitForm.category = '红色记忆'
   submitForm.description = ''
   submitForm.cover = null
   submitForm.video = null
@@ -170,9 +167,9 @@ async function handleVote(work) {
 
   try {
     const result = await voteVideoContestWorkApi(work.id)
-
     ElMessage.success(result.message || '投票成功')
     await Promise.all([loadOverview(), loadWorks()])
+
     if (detailVisible.value && currentWork.value?.id === work.id) {
       await openDetail(work.id)
     }
@@ -276,8 +273,8 @@ onMounted(() => {
         <span class="vc-kicker">VIDEO CONTEST</span>
         <h1>视频大赛</h1>
         <p>
-          这一页承接旧站的核心赛事流程：在线评选、作品投稿、榜单展示和作品评论。
-          现在已经切到新的 Vue 页面和结构化接口，后续再接后台审核就会更稳。
+          这一页承接平台的视频投稿、在线投票、排行榜展示和评论互动。
+          现在已经整理成更适合持续运营和后续接入后台审核的前台结构。
         </p>
       </div>
     </section>
@@ -295,7 +292,7 @@ onMounted(() => {
         <div class="vc-card__header">
           <div>
             <h2>赛事内容中心</h2>
-            <p>先把前台核心链路打通，后面再把后台审核、公告和更多治理能力补进来。</p>
+            <p>先把前台投稿、投票、榜单和详情评论这条主链路做顺，方便持续测试。</p>
           </div>
           <el-button :loading="loading" @click="loadPageData">刷新数据</el-button>
         </div>
@@ -306,11 +303,16 @@ onMounted(() => {
           <div class="vc-toolbar">
             <el-input v-model="searchKeyword" placeholder="搜索作品标题或作者" clearable />
             <el-select v-model="currentCategory" style="width: 180px">
-              <el-option v-for="item in categoryOptions" :key="item" :label="item === 'all' ? '全部赛区' : item" :value="item" />
+              <el-option
+                v-for="item in categoryOptions"
+                :key="item"
+                :label="item === 'all' ? '全部赛区' : item"
+                :value="item"
+              />
             </el-select>
             <el-radio-group v-model="currentSort">
-              <el-radio-button label="hot">最高热度</el-radio-button>
-              <el-radio-button label="new">最新发布</el-radio-button>
+              <el-radio-button value="hot">最高热度</el-radio-button>
+              <el-radio-button value="new">最新发布</el-radio-button>
             </el-radio-group>
             <el-button type="danger" @click="currentPage = 1; loadWorks()">筛选</el-button>
           </div>
@@ -359,7 +361,7 @@ onMounted(() => {
           <div class="vc-submit-shell">
             <section class="vc-submit-intro">
               <h3>提交我的参赛作品</h3>
-              <p>登录后可以提交视频作品和封面，作品将进入后台审核，通过后会出现在在线评选区。</p>
+              <p>登录后可以上传视频文件和封面，作品会先进入后台审核，审核通过后再进入公开投票区。</p>
               <el-alert
                 type="warning"
                 :closable="false"
@@ -376,13 +378,10 @@ onMounted(() => {
               </el-form-item>
               <el-form-item label="参赛组别">
                 <el-select v-model="submitForm.category" style="width: 100%">
-                  <el-option label="历史沿革" value="历史沿革" />
-                  <el-option label="非遗技艺" value="非遗技艺" />
-                  <el-option label="红色精神" value="红色精神" />
-                  <el-option label="时代创新" value="时代创新" />
+                  <el-option v-for="item in categoryOptions.filter((item) => item !== 'all')" :key="item" :label="item" :value="item" />
                 </el-select>
               </el-form-item>
-              <el-form-item label="创作理念">
+              <el-form-item label="创作说明">
                 <el-input v-model="submitForm.description" type="textarea" :rows="5" maxlength="500" show-word-limit />
               </el-form-item>
               <el-form-item label="作品封面">
@@ -437,14 +436,14 @@ onMounted(() => {
 
         <el-tab-pane label="赛事概览" name="stats">
           <div class="vc-stats-shell">
-            <section class="vc-latest">
+            <section class="vc-panel">
               <header class="vc-block-header">
                 <div>
                   <h3>最新公开作品</h3>
-                  <p>用于替代旧站的动态公告和赛况更新区。</p>
+                  <p>这里展示最近进入前台公开区的视频内容，方便首页和赛事页联动观察。</p>
                 </div>
               </header>
-              <el-empty v-if="!latestWorks.length && !loading" description="当前还没有公开作品动态" />
+              <el-empty v-if="!latestWorks.length && !loading" description="当前还没有最新作品动态" />
               <div v-else class="vc-latest-list">
                 <article v-for="item in latestWorks" :key="item.id" class="vc-latest-item">
                   <div class="vc-latest-item__meta">
@@ -457,11 +456,11 @@ onMounted(() => {
               </div>
             </section>
 
-            <section class="vc-category-stats">
+            <section class="vc-panel">
               <header class="vc-block-header">
                 <div>
                   <h3>赛区分布</h3>
-                  <p>当前公开作品按赛区的分布情况。</p>
+                  <p>按分类查看当前公开作品的分布情况，方便判断内容是否均衡。</p>
                 </div>
               </header>
               <el-empty v-if="!categoriesStats.length && !loading" description="当前还没有赛区统计数据" />
@@ -487,6 +486,7 @@ onMounted(() => {
           <div class="vc-detail__media">
             <video :src="currentWork.video_url" controls preload="metadata"></video>
           </div>
+
           <div class="vc-detail__info">
             <div class="vc-detail__meta">
               <el-tag size="small" effect="plain">{{ currentWork.category || '未分类' }}</el-tag>
@@ -593,7 +593,8 @@ onMounted(() => {
 .vc-rank-card,
 .vc-latest-item,
 .vc-category-item,
-.vc-comment-item {
+.vc-comment-item,
+.vc-panel {
   border-radius: 24px;
   border: 1px solid #efe2da;
   background: rgba(255, 255, 255, 0.95);
@@ -632,7 +633,8 @@ onMounted(() => {
 .vc-work-card__footer,
 .vc-work-card__actions,
 .vc-detail__meta,
-.vc-comment-item__header {
+.vc-comment-item__header,
+.vc-latest-item__meta {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
@@ -683,6 +685,10 @@ onMounted(() => {
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
+.vc-stats-shell {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
 .vc-work-card,
 .vc-rank-card {
   overflow: hidden;
@@ -709,19 +715,22 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #9ca3af;
+  font-size: 14px;
 }
 
 .vc-work-card__body,
 .vc-rank-card__body,
 .vc-latest-item,
 .vc-category-item,
-.vc-comment-item {
+.vc-comment-item,
+.vc-panel {
   padding: 18px;
 }
 
 .vc-work-card__footer,
 .vc-detail__meta,
-.vc-comment-item__header {
+.vc-comment-item__header,
+.vc-latest-item__meta {
   color: #8a8f98;
   font-size: 13px;
 }
@@ -737,7 +746,6 @@ onMounted(() => {
 }
 
 .vc-submit-shell,
-.vc-stats-shell,
 .vc-detail {
   display: grid;
   grid-template-columns: minmax(260px, 0.8fr) minmax(0, 1.2fr);
@@ -746,8 +754,6 @@ onMounted(() => {
 
 .vc-submit-intro,
 .vc-submit-form,
-.vc-latest,
-.vc-category-stats,
 .vc-detail__info,
 .vc-comments {
   padding: 24px;
@@ -813,7 +819,6 @@ onMounted(() => {
 
   .vc-card__header,
   .vc-submit-shell,
-  .vc-stats-shell,
   .vc-detail {
     grid-template-columns: 1fr;
   }

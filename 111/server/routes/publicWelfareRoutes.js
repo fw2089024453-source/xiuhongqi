@@ -3,11 +3,14 @@ import multer from 'multer'
 import path from 'path'
 import { fileURLToPath } from 'url'
 import { pool } from '../../config/db.js'
+import { requireAdmin } from '../middleware/auth.js'
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
 const router = express.Router()
+
+const ACTIVITY_STATUSES = ['planning', 'ongoing', 'completed', 'cancelled']
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, path.join(__dirname, '../../public/uploads')),
@@ -18,7 +21,50 @@ const storage = multer.diskStorage({
 const upload = multer({ storage })
 const uploadMulti = multer({ storage }).array('images', 9)
 
-router.get('/activities', async (req, res) => {
+function normalizeText(value) {
+  return String(value || '').trim()
+}
+
+function normalizeNullableText(value) {
+  const text = normalizeText(value)
+  return text || null
+}
+
+function normalizeNullableNumber(value) {
+  if (value === '' || value === null || value === undefined) return null
+  const number = Number(value)
+  return Number.isFinite(number) ? number : null
+}
+
+function normalizeStatus(value) {
+  return ACTIVITY_STATUSES.includes(value) ? value : 'planning'
+}
+
+function buildAssetUrl(file) {
+  return file ? `/uploads/${file.filename}` : ''
+}
+
+function normalizeJsonArray(value) {
+  if (!value) return []
+  if (Array.isArray(value)) return value.map((item) => normalizeText(item)).filter(Boolean)
+
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.map((item) => normalizeText(item)).filter(Boolean) : []
+  } catch {
+    return String(value)
+      .split(/\r?\n/)
+      .map((item) => normalizeText(item))
+      .filter(Boolean)
+  }
+}
+
+async function findById(tableName, id) {
+  const [rows] = await pool.query(`SELECT * FROM ${tableName} WHERE id = ? LIMIT 1`, [id])
+  return rows[0] || null
+}
+
+async function listActivities(req, res) {
   try {
     const [rows] = await pool.query(`
       SELECT
@@ -36,7 +82,8 @@ router.get('/activities', async (req, res) => {
         cover_image AS image_url,
         gallery_images,
         status,
-        created_at
+        created_at,
+        updated_at
       FROM public_welfare_activities
       ORDER BY created_at DESC
     `)
@@ -44,133 +91,137 @@ router.get('/activities', async (req, res) => {
     res.json({ success: true, data: rows })
   } catch (error) {
     console.error('public welfare activities error:', error)
-    res.status(500).json({ success: false, message: '获取公益活动失败' })
+    res.status(500).json({ success: false, message: 'Failed to load public welfare activities' })
   }
-})
+}
 
-router.post('/activities', upload.single('image'), async (req, res) => {
+router.get('/activities', listActivities)
+router.get('/admin/activities', requireAdmin, listActivities)
+
+async function createActivity(req, res) {
+  const title = normalizeText(req.body.title)
+  const description = normalizeText(req.body.description)
+
+  if (!title || !description) {
+    return res.status(400).json({ success: false, message: 'Title and description are required' })
+  }
+
   try {
-    const {
-      title,
-      description,
-      detailed_content,
-      start_date,
-      end_date,
-      location,
-      organizer,
-      contact_info,
-      target_participants,
-      status,
-    } = req.body
-
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : ''
+    const imageUrl = buildAssetUrl(req.file) || normalizeText(req.body.image_url)
+    const galleryImages = normalizeJsonArray(req.body.gallery_images)
 
     await pool.query(
       `
-      INSERT INTO public_welfare_activities
-        (title, description, detailed_content, start_date, end_date, location, organizer, contact_info, target_participants, cover_image, status)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO public_welfare_activities
+          (
+            title,
+            description,
+            detailed_content,
+            start_date,
+            end_date,
+            location,
+            organizer,
+            contact_info,
+            target_participants,
+            cover_image,
+            gallery_images,
+            status,
+            created_by
+          )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         title,
         description,
-        detailed_content || null,
-        start_date || null,
-        end_date || null,
-        location || null,
-        organizer || null,
-        contact_info || null,
-        target_participants || null,
-        imageUrl,
-        status || 'planning',
+        normalizeNullableText(req.body.detailed_content),
+        normalizeNullableText(req.body.start_date),
+        normalizeNullableText(req.body.end_date),
+        normalizeNullableText(req.body.location),
+        normalizeNullableText(req.body.organizer),
+        normalizeNullableText(req.body.contact_info),
+        normalizeNullableNumber(req.body.target_participants),
+        imageUrl || null,
+        galleryImages.length ? JSON.stringify(galleryImages) : null,
+        normalizeStatus(req.body.status),
+        Number(req.user?.id || 0) || null,
       ],
     )
 
-    res.json({ success: true, message: '公益活动发布成功' })
+    res.json({ success: true, message: 'Activity created successfully' })
   } catch (error) {
     console.error('create welfare activity error:', error)
-    res.status(500).json({ success: false, message: '公益活动发布失败' })
+    res.status(500).json({ success: false, message: 'Failed to create activity' })
   }
-})
+}
 
-router.put('/activities/:id', upload.single('image'), async (req, res) => {
+async function updateActivity(req, res) {
+  const title = normalizeText(req.body.title)
+  const description = normalizeText(req.body.description)
+
+  if (!title || !description) {
+    return res.status(400).json({ success: false, message: 'Title and description are required' })
+  }
+
   try {
-    const {
-      title,
-      description,
-      detailed_content,
-      start_date,
-      end_date,
-      location,
-      organizer,
-      contact_info,
-      target_participants,
-      status,
-    } = req.body
+    const existing = await findById('public_welfare_activities', req.params.id)
 
-    if (req.file) {
-      await pool.query(
-        `
-        UPDATE public_welfare_activities
-        SET title = ?, description = ?, detailed_content = ?, start_date = ?, end_date = ?, location = ?, organizer = ?, contact_info = ?, target_participants = ?, cover_image = ?, status = ?
-        WHERE id = ?
-        `,
-        [
-          title,
-          description,
-          detailed_content || null,
-          start_date || null,
-          end_date || null,
-          location || null,
-          organizer || null,
-          contact_info || null,
-          target_participants || null,
-          `/uploads/${req.file.filename}`,
-          status || 'planning',
-          req.params.id,
-        ],
-      )
-    } else {
-      await pool.query(
-        `
-        UPDATE public_welfare_activities
-        SET title = ?, description = ?, detailed_content = ?, start_date = ?, end_date = ?, location = ?, organizer = ?, contact_info = ?, target_participants = ?, status = ?
-        WHERE id = ?
-        `,
-        [
-          title,
-          description,
-          detailed_content || null,
-          start_date || null,
-          end_date || null,
-          location || null,
-          organizer || null,
-          contact_info || null,
-          target_participants || null,
-          status || 'planning',
-          req.params.id,
-        ],
-      )
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Activity not found' })
     }
 
-    res.json({ success: true, message: '公益活动更新成功' })
+    const imageUrl =
+      buildAssetUrl(req.file) ||
+      (req.body.image_url !== undefined ? normalizeText(req.body.image_url) : existing.cover_image)
+    const galleryImages =
+      req.body.gallery_images !== undefined
+        ? normalizeJsonArray(req.body.gallery_images)
+        : normalizeJsonArray(existing.gallery_images)
+
+    await pool.query(
+      `
+        UPDATE public_welfare_activities
+        SET title = ?, description = ?, detailed_content = ?, start_date = ?, end_date = ?, location = ?, organizer = ?, contact_info = ?,
+            target_participants = ?, cover_image = ?, gallery_images = ?, status = ?
+        WHERE id = ?
+      `,
+      [
+        title,
+        description,
+        normalizeNullableText(req.body.detailed_content),
+        normalizeNullableText(req.body.start_date),
+        normalizeNullableText(req.body.end_date),
+        normalizeNullableText(req.body.location),
+        normalizeNullableText(req.body.organizer),
+        normalizeNullableText(req.body.contact_info),
+        normalizeNullableNumber(req.body.target_participants),
+        imageUrl || null,
+        galleryImages.length ? JSON.stringify(galleryImages) : null,
+        normalizeStatus(req.body.status || existing.status),
+        req.params.id,
+      ],
+    )
+
+    res.json({ success: true, message: 'Activity updated successfully' })
   } catch (error) {
     console.error('update welfare activity error:', error)
-    res.status(500).json({ success: false, message: '公益活动更新失败' })
+    res.status(500).json({ success: false, message: 'Failed to update activity' })
   }
-})
+}
 
-router.delete('/activities/:id', async (req, res) => {
+router.post(['/activities', '/admin/activities'], requireAdmin, upload.single('image'), createActivity)
+router.put(['/activities/:id', '/admin/activities/:id'], requireAdmin, upload.single('image'), updateActivity)
+
+router.delete(['/activities/:id', '/admin/activities/:id'], requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM public_welfare_activities WHERE id = ?', [req.params.id])
-    res.json({ success: true, message: '删除成功' })
+    res.json({ success: true, message: 'Activity deleted successfully' })
   } catch (error) {
     console.error('delete welfare activity error:', error)
-    res.status(500).json({ success: false, message: '删除失败' })
+    res.status(500).json({ success: false, message: 'Failed to delete activity' })
   }
 })
 
-router.get('/volunteers', async (req, res) => {
+async function listVolunteers(req, res) {
   try {
     const [rows] = await pool.query(`
       SELECT *
@@ -181,104 +232,108 @@ router.get('/volunteers', async (req, res) => {
     res.json({ success: true, data: rows })
   } catch (error) {
     console.error('public welfare volunteers error:', error)
-    res.status(500).json({ success: false, message: '获取志愿者失败' })
+    res.status(500).json({ success: false, message: 'Failed to load volunteers' })
   }
-})
+}
 
-router.post('/volunteers', upload.single('avatar'), async (req, res) => {
+router.get('/volunteers', listVolunteers)
+router.get('/admin/volunteers', requireAdmin, listVolunteers)
+
+async function createVolunteer(req, res) {
+  const name = normalizeText(req.body.name)
+
+  if (!name) {
+    return res.status(400).json({ success: false, message: 'Volunteer name is required' })
+  }
+
   try {
-    const { name, role, quote, introduction, stat_years, stat_projects, stat_people, sort_order } = req.body
-    const avatarUrl = req.file ? `/uploads/${req.file.filename}` : ''
+    const avatarUrl = buildAssetUrl(req.file) || normalizeText(req.body.avatar_url)
 
     await pool.query(
       `
-      INSERT INTO public_welfare_volunteers
-        (name, role, quote, introduction, stat_years, stat_projects, stat_people, avatar_url, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO public_welfare_volunteers
+          (name, role, quote, introduction, stat_years, stat_projects, stat_people, avatar_url, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         name,
-        role,
-        quote || null,
-        introduction || null,
-        stat_years || 0,
-        stat_projects || 0,
-        stat_people || 0,
-        avatarUrl,
-        sort_order || 0,
+        normalizeNullableText(req.body.role),
+        normalizeNullableText(req.body.quote),
+        normalizeNullableText(req.body.introduction),
+        normalizeNullableNumber(req.body.stat_years) || 0,
+        normalizeNullableNumber(req.body.stat_projects) || 0,
+        normalizeNullableNumber(req.body.stat_people) || 0,
+        avatarUrl || null,
+        normalizeNullableNumber(req.body.sort_order) || 0,
       ],
     )
 
-    res.json({ success: true, message: '志愿者故事发布成功' })
+    res.json({ success: true, message: 'Volunteer story created successfully' })
   } catch (error) {
     console.error('create welfare volunteer error:', error)
-    res.status(500).json({ success: false, message: '志愿者故事发布失败' })
+    res.status(500).json({ success: false, message: 'Failed to create volunteer story' })
   }
-})
+}
 
-router.put('/volunteers/:id', upload.single('avatar'), async (req, res) => {
+async function updateVolunteer(req, res) {
+  const name = normalizeText(req.body.name)
+
+  if (!name) {
+    return res.status(400).json({ success: false, message: 'Volunteer name is required' })
+  }
+
   try {
-    const { name, role, quote, introduction, stat_years, stat_projects, stat_people, sort_order } = req.body
+    const existing = await findById('public_welfare_volunteers', req.params.id)
 
-    if (req.file) {
-      await pool.query(
-        `
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Volunteer not found' })
+    }
+
+    const avatarUrl =
+      buildAssetUrl(req.file) ||
+      (req.body.avatar_url !== undefined ? normalizeText(req.body.avatar_url) : existing.avatar_url)
+
+    await pool.query(
+      `
         UPDATE public_welfare_volunteers
         SET name = ?, role = ?, quote = ?, introduction = ?, stat_years = ?, stat_projects = ?, stat_people = ?, avatar_url = ?, sort_order = ?
         WHERE id = ?
-        `,
-        [
-          name,
-          role,
-          quote || null,
-          introduction || null,
-          stat_years || 0,
-          stat_projects || 0,
-          stat_people || 0,
-          `/uploads/${req.file.filename}`,
-          sort_order || 0,
-          req.params.id,
-        ],
-      )
-    } else {
-      await pool.query(
-        `
-        UPDATE public_welfare_volunteers
-        SET name = ?, role = ?, quote = ?, introduction = ?, stat_years = ?, stat_projects = ?, stat_people = ?, sort_order = ?
-        WHERE id = ?
-        `,
-        [
-          name,
-          role,
-          quote || null,
-          introduction || null,
-          stat_years || 0,
-          stat_projects || 0,
-          stat_people || 0,
-          sort_order || 0,
-          req.params.id,
-        ],
-      )
-    }
+      `,
+      [
+        name,
+        normalizeNullableText(req.body.role),
+        normalizeNullableText(req.body.quote),
+        normalizeNullableText(req.body.introduction),
+        normalizeNullableNumber(req.body.stat_years) || 0,
+        normalizeNullableNumber(req.body.stat_projects) || 0,
+        normalizeNullableNumber(req.body.stat_people) || 0,
+        avatarUrl || null,
+        normalizeNullableNumber(req.body.sort_order) || 0,
+        req.params.id,
+      ],
+    )
 
-    res.json({ success: true, message: '志愿者故事更新成功' })
+    res.json({ success: true, message: 'Volunteer story updated successfully' })
   } catch (error) {
     console.error('update welfare volunteer error:', error)
-    res.status(500).json({ success: false, message: '志愿者故事更新失败' })
+    res.status(500).json({ success: false, message: 'Failed to update volunteer story' })
   }
-})
+}
 
-router.delete('/volunteers/:id', async (req, res) => {
+router.post(['/volunteers', '/admin/volunteers'], requireAdmin, upload.single('avatar'), createVolunteer)
+router.put(['/volunteers/:id', '/admin/volunteers/:id'], requireAdmin, upload.single('avatar'), updateVolunteer)
+
+router.delete(['/volunteers/:id', '/admin/volunteers/:id'], requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM public_welfare_volunteers WHERE id = ?', [req.params.id])
-    res.json({ success: true, message: '删除成功' })
+    res.json({ success: true, message: 'Volunteer story deleted successfully' })
   } catch (error) {
     console.error('delete welfare volunteer error:', error)
-    res.status(500).json({ success: false, message: '删除失败' })
+    res.status(500).json({ success: false, message: 'Failed to delete volunteer story' })
   }
 })
 
-router.get('/timelines', async (req, res) => {
+async function listTimelines(req, res) {
   try {
     const [rows] = await pool.query(`
       SELECT *
@@ -289,70 +344,104 @@ router.get('/timelines', async (req, res) => {
     res.json({ success: true, data: rows })
   } catch (error) {
     console.error('public welfare timelines error:', error)
-    res.status(500).json({ success: false, message: '获取公益历程失败' })
+    res.status(500).json({ success: false, message: 'Failed to load timelines' })
   }
-})
+}
 
-router.post('/timelines', uploadMulti, async (req, res) => {
+router.get('/timelines', listTimelines)
+router.get('/admin/timelines', requireAdmin, listTimelines)
+
+async function createTimeline(req, res) {
+  const title = normalizeText(req.body.title)
+
+  if (!title) {
+    return res.status(400).json({ success: false, message: 'Timeline title is required' })
+  }
+
   try {
-    const { year, event_name, title, description, sort_order } = req.body
-    const imageUrls = req.files?.length ? req.files.map((file) => `/uploads/${file.filename}`) : []
+    const uploadedImages = req.files?.length ? req.files.map((file) => buildAssetUrl(file)) : []
+    const bodyImages = normalizeJsonArray(req.body.image_urls)
+    const imageUrls = uploadedImages.length ? uploadedImages : bodyImages
 
     await pool.query(
       `
-      INSERT INTO public_welfare_timelines
-        (year, event_name, title, description, image_urls, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO public_welfare_timelines
+          (year, event_name, title, description, image_urls, sort_order)
+        VALUES (?, ?, ?, ?, ?, ?)
       `,
-      [year || null, event_name || null, title, description || null, JSON.stringify(imageUrls), sort_order || 0],
+      [
+        normalizeNullableNumber(req.body.year),
+        normalizeNullableText(req.body.event_name),
+        title,
+        normalizeNullableText(req.body.description),
+        imageUrls.length ? JSON.stringify(imageUrls) : null,
+        normalizeNullableNumber(req.body.sort_order) || 0,
+      ],
     )
 
-    res.json({ success: true, message: '公益历程发布成功' })
+    res.json({ success: true, message: 'Timeline item created successfully' })
   } catch (error) {
     console.error('create welfare timeline error:', error)
-    res.status(500).json({ success: false, message: '公益历程发布失败' })
+    res.status(500).json({ success: false, message: 'Failed to create timeline item' })
   }
-})
+}
 
-router.put('/timelines/:id', uploadMulti, async (req, res) => {
+async function updateTimeline(req, res) {
+  const title = normalizeText(req.body.title)
+
+  if (!title) {
+    return res.status(400).json({ success: false, message: 'Timeline title is required' })
+  }
+
   try {
-    const { year, event_name, title, description, sort_order } = req.body
+    const existing = await findById('public_welfare_timelines', req.params.id)
 
-    if (req.files?.length) {
-      const imageUrls = req.files.map((file) => `/uploads/${file.filename}`)
-      await pool.query(
-        `
+    if (!existing) {
+      return res.status(404).json({ success: false, message: 'Timeline item not found' })
+    }
+
+    const uploadedImages = req.files?.length ? req.files.map((file) => buildAssetUrl(file)) : []
+    const imageUrls =
+      uploadedImages.length
+        ? uploadedImages
+        : req.body.image_urls !== undefined
+          ? normalizeJsonArray(req.body.image_urls)
+          : normalizeJsonArray(existing.image_urls)
+
+    await pool.query(
+      `
         UPDATE public_welfare_timelines
         SET year = ?, event_name = ?, title = ?, description = ?, image_urls = ?, sort_order = ?
         WHERE id = ?
-        `,
-        [year || null, event_name || null, title, description || null, JSON.stringify(imageUrls), sort_order || 0, req.params.id],
-      )
-    } else {
-      await pool.query(
-        `
-        UPDATE public_welfare_timelines
-        SET year = ?, event_name = ?, title = ?, description = ?, sort_order = ?
-        WHERE id = ?
-        `,
-        [year || null, event_name || null, title, description || null, sort_order || 0, req.params.id],
-      )
-    }
+      `,
+      [
+        normalizeNullableNumber(req.body.year),
+        normalizeNullableText(req.body.event_name),
+        title,
+        normalizeNullableText(req.body.description),
+        imageUrls.length ? JSON.stringify(imageUrls) : null,
+        normalizeNullableNumber(req.body.sort_order) || 0,
+        req.params.id,
+      ],
+    )
 
-    res.json({ success: true, message: '公益历程更新成功' })
+    res.json({ success: true, message: 'Timeline item updated successfully' })
   } catch (error) {
     console.error('update welfare timeline error:', error)
-    res.status(500).json({ success: false, message: '公益历程更新失败' })
+    res.status(500).json({ success: false, message: 'Failed to update timeline item' })
   }
-})
+}
 
-router.delete('/timelines/:id', async (req, res) => {
+router.post(['/timelines', '/admin/timelines'], requireAdmin, uploadMulti, createTimeline)
+router.put(['/timelines/:id', '/admin/timelines/:id'], requireAdmin, uploadMulti, updateTimeline)
+
+router.delete(['/timelines/:id', '/admin/timelines/:id'], requireAdmin, async (req, res) => {
   try {
     await pool.query('DELETE FROM public_welfare_timelines WHERE id = ?', [req.params.id])
-    res.json({ success: true, message: '删除成功' })
+    res.json({ success: true, message: 'Timeline item deleted successfully' })
   } catch (error) {
     console.error('delete welfare timeline error:', error)
-    res.status(500).json({ success: false, message: '删除失败' })
+    res.status(500).json({ success: false, message: 'Failed to delete timeline item' })
   }
 })
 

@@ -1,0 +1,6 @@
+Demo course guide
+
+- Prepare cloth, needle, and thread.
+- Use one sample image and one process note.
+- Follow chapter order for verification.
+- Submit one finished work for review flow testing.

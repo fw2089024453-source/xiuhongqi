@@ -67,7 +67,7 @@ const routes = [
         path: 'login',
         name: 'login',
         component: () => import('@/views/auth/LoginView.vue'),
-        meta: { title: '登录' },
+        meta: { title: '登录', requiresGuest: true },
       },
     ],
   },
@@ -86,7 +86,25 @@ const routes = [
         path: 'reviews',
         name: 'admin-reviews',
         component: () => import('@/views/admin/AdminReviewView.vue'),
-        meta: { title: '作品审核', requiresAuth: true, requiresAdmin: true },
+        meta: { title: '审核中心', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'red-culture',
+        name: 'admin-red-culture',
+        component: () => import('@/views/admin/AdminRedCultureView.vue'),
+        meta: { title: '红旗文化管理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'public-welfare',
+        name: 'admin-public-welfare',
+        component: () => import('@/views/admin/AdminPublicWelfareView.vue'),
+        meta: { title: '公益纪实管理', requiresAuth: true, requiresAdmin: true },
+      },
+      {
+        path: 'skill-teaching',
+        name: 'admin-skill-teaching',
+        component: () => import('@/views/admin/AdminSkillTeachingView.vue'),
+        meta: { title: '技艺教学管理', requiresAuth: true, requiresAdmin: true },
       },
       {
         path: 'operations',
@@ -125,7 +143,7 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  document.title = `${to.meta.title || '新前端'} - ${appTitle}`
+  document.title = `${to.meta.title || '前端'} - ${appTitle}`
 
   const token = localStorage.getItem('xhq-token')
   const user = JSON.parse(localStorage.getItem('xhq-user') || 'null')

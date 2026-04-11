@@ -14,19 +14,19 @@ const quotes = ref([])
 
 const summaryCards = computed(() => [
   {
-    label: '文化展示',
+    label: '文化展廊',
     value: galleries.value.length,
-    hint: '对应红旗故事与图文展示内容',
+    hint: '用于承接红旗故事、图文专栏和人物内容。',
   },
   {
-    label: '发展历程',
+    label: '历史节点',
     value: timelines.value.length,
-    hint: '按年份组织的重要节点',
+    hint: '按年份组织的重要时间线内容。',
   },
   {
     label: '精神语录',
     value: quotes.value.length,
-    hint: '由精神内容转换而来的语录卡片',
+    hint: '以短句卡片的形式展示平台精神内核。',
   },
 ])
 
@@ -64,7 +64,8 @@ onMounted(() => {
         <span class="rc-kicker">RED CULTURE</span>
         <h1>红旗文化</h1>
         <p>
-          这一页会替代旧站的“文化展示 / 发展历程 / 名人谈红旗”三段式结构，并逐步接入真实内容管理。
+          这一页承接旧站“文化展示、发展历程、名家语录”的核心内容，
+          现在已经改成更适合持续录入和运营维护的结构。
         </p>
       </div>
     </section>
@@ -83,15 +84,15 @@ onMounted(() => {
           <div class="rc-card__header">
             <div>
               <h2>内容总览</h2>
-              <p>先用统一的 Vue 结构替代旧站的多面板切换逻辑。</p>
+              <p>先用统一的 Vue 结构替代旧站零散切换，再逐步补齐正式内容。</p>
             </div>
             <el-button :loading="loading" @click="loadData">刷新数据</el-button>
           </div>
         </template>
 
         <el-tabs v-model="activeTab" class="rc-tabs">
-          <el-tab-pane label="文化展示" name="gallery">
-            <el-empty v-if="!galleries.length && !loading" description="当前还没有文化展示内容" />
+          <el-tab-pane label="文化展廊" name="gallery">
+            <el-empty v-if="!galleries.length && !loading" description="当前还没有文化展廊内容" />
 
             <div v-else class="gallery-grid">
               <article v-for="item in galleries" :key="item.id" class="gallery-card">
@@ -106,7 +107,7 @@ onMounted(() => {
                 <div class="gallery-card__body">
                   <div class="gallery-card__meta">
                     <el-tag size="small" type="danger">{{ formatYear(item.year) }}</el-tag>
-                    <span>{{ item.location || '文化内容' }}</span>
+                    <span>{{ item.location || item.author || '文化内容' }}</span>
                   </div>
                   <h3>{{ item.title }}</h3>
                   <p>{{ item.description || '暂无简介' }}</p>
@@ -124,7 +125,7 @@ onMounted(() => {
                 <div class="timeline-item__line"></div>
                 <div class="timeline-item__content">
                   <h3>{{ item.title }}</h3>
-                  <div class="timeline-item__event">{{ item.event_name }}</div>
+                  <div class="timeline-item__event">{{ item.event_name || '历史节点' }}</div>
                   <p>{{ item.description || '暂无内容简介' }}</p>
                 </div>
               </article>
@@ -145,7 +146,7 @@ onMounted(() => {
                   </div>
                   <div>
                     <div class="quote-card__name">{{ item.author_name }}</div>
-                    <div class="quote-card__title">{{ item.author_title }}</div>
+                    <div class="quote-card__title">{{ item.author_title || '红旗精神' }}</div>
                   </div>
                 </div>
               </article>
@@ -280,6 +281,7 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #9ca3af;
+  font-size: 14px;
 }
 
 .gallery-card__body {
@@ -301,6 +303,10 @@ onMounted(() => {
 .quote-card__name {
   margin: 0;
   color: #7f1d1d;
+}
+
+.gallery-card h3 {
+  margin-bottom: 10px;
 }
 
 .gallery-card p,

@@ -13,9 +13,9 @@ const volunteers = ref([])
 const timelines = ref([])
 
 const summaryCards = computed(() => [
-  { label: '公益活动', value: activities.value.length, hint: '当前活动与项目条目数' },
-  { label: '志愿者故事', value: volunteers.value.length, hint: '可对外展示的志愿者内容' },
-  { label: '发展历程', value: timelines.value.length, hint: '公益项目的重要节点' },
+  { label: '公益活动', value: activities.value.length, hint: '当前可展示的活动与项目数量。' },
+  { label: '志愿者故事', value: volunteers.value.length, hint: '适合对外展示的志愿者人物内容。' },
+  { label: '发展历程', value: timelines.value.length, hint: '公益项目的重要时间节点。' },
 ])
 
 function formatStatus(status) {
@@ -85,8 +85,11 @@ onMounted(() => {
     <section class="pw-hero">
       <div class="pw-hero__inner">
         <span class="pw-kicker">PUBLIC WELFARE</span>
-        <h1>公益板块</h1>
-        <p>这一页会替代旧站的“近期活动 / 志愿者故事 / 发展历程”三段式内容结构，并与新的公益数据表保持一致。</p>
+        <h1>公益纪实</h1>
+        <p>
+          这一页用于承接近期活动、志愿者人物和公益发展历程，
+          现在已经整理成更适合持续录入、持续展示的内容结构。
+        </p>
       </div>
     </section>
 
@@ -103,7 +106,7 @@ onMounted(() => {
         <div class="pw-card__header">
           <div>
             <h2>公益内容中心</h2>
-            <p>优先把旧页面的三段内容切成标准组件，后面可以直接接后台录入。</p>
+            <p>先让活动、人物、历程三块内容都能稳定展示，后面就可以直接接后台录入。</p>
           </div>
           <el-button :loading="loading" @click="loadData">刷新数据</el-button>
         </div>
@@ -321,6 +324,7 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #9ca3af;
+  font-size: 14px;
 }
 
 .activity-card__body,
@@ -351,6 +355,10 @@ onMounted(() => {
 .timeline-item__content h3 {
   margin: 0;
   color: #166534;
+}
+
+.activity-card h3 {
+  margin-bottom: 10px;
 }
 
 .activity-card p,

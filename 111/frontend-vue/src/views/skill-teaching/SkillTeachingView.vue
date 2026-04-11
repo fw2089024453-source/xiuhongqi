@@ -38,10 +38,10 @@ const uploadForm = reactive({
 })
 
 const summaryCards = computed(() => [
-  { label: '课程分类', value: summary.value.categories, hint: '为后续后台录入预留的教学方向' },
-  { label: '公开课程', value: summary.value.courses, hint: '当前已发布并可对外展示的课程' },
-  { label: '学习资料', value: summary.value.resources, hint: '可直接下载使用的教学素材' },
-  { label: '学员作品', value: summary.value.works, hint: '审核通过后公开展示的作品' },
+  { label: '课程分类', value: summary.value.categories, hint: '用于组织教学方向和内容结构。' },
+  { label: '公开课程', value: summary.value.courses, hint: '当前已发布并可展示的课程数量。' },
+  { label: '学习资料', value: summary.value.resources, hint: '适合直接下载使用的教学素材。' },
+  { label: '学员作品', value: summary.value.works, hint: '审核通过后公开展示的学习成果。' },
 ])
 
 const filteredCourses = computed(() => {
@@ -74,12 +74,23 @@ function formatDate(value) {
 }
 
 function formatDifficulty(value) {
-  return value || '初级'
+  const map = {
+    beginner: '初级',
+    intermediate: '中级',
+    advanced: '高级',
+    初级: '初级',
+    中级: '中级',
+    高级: '高级',
+  }
+
+  return map[value] || value || '初级'
 }
 
 function getCategoryHint(item) {
   if (item.description) return item.description
-  return item.course_count ? `当前已归档 ${item.course_count} 门课程` : '等待后台补充课程内容'
+  return item.course_count
+    ? `当前已归档 ${item.course_count} 门课程，可继续补章节和资源。`
+    : '等待后台补充课程内容。'
 }
 
 function onFileChange(file) {
@@ -166,8 +177,8 @@ onMounted(() => {
         <span class="st-kicker">SKILL TEACHING</span>
         <h1>技艺教学</h1>
         <p>
-          这一页承接旧站“课程分类、精选课程、素材下载、学员作品、作品投稿”五个核心功能，
-          现在已经切到新的 Vue 结构和可扩展接口，后面接后台录入和云端部署会更稳。
+          这一页承接课程分类、精选课程、资料下载、学员作品和投稿五个核心功能，
+          现在已经切到新的 Vue 结构，更适合后续持续录入和运营。
         </p>
       </div>
     </section>
@@ -228,7 +239,7 @@ onMounted(() => {
             <article v-for="item in filteredCourses" :key="item.id" class="st-course-card">
               <div class="st-course-card__cover">
                 <img v-if="item.cover_image" :src="item.cover_image" :alt="item.title" />
-                <div v-else class="st-course-card__placeholder">待上传封面</div>
+                <div v-else class="st-course-card__placeholder">等待上传封面</div>
               </div>
               <div class="st-course-card__body">
                 <div class="st-course-card__meta">
@@ -310,7 +321,7 @@ onMounted(() => {
         </el-tab-pane>
 
         <el-tab-pane label="素材下载" name="resources">
-          <el-empty v-if="!resources.length && !loading" description="当前还没有学习素材" />
+          <el-empty v-if="!resources.length && !loading" description="当前还没有学习资料" />
 
           <div v-else class="st-resources-grid">
             <article v-for="item in resources" :key="item.id" class="st-resource-card">
@@ -351,7 +362,7 @@ onMounted(() => {
           <div class="st-upload-shell">
             <div class="st-upload-intro">
               <h3>提交我的作品</h3>
-              <p>登录后可以提交自己的刺绣学习作品，作品进入后台审核后会展示在学员作品区。</p>
+              <p>登录后可以提交自己的学习作品，审核通过后会展示在学员作品区。</p>
               <el-alert
                 v-if="!isLoggedIn"
                 type="warning"
@@ -597,6 +608,7 @@ onMounted(() => {
   justify-content: center;
   height: 100%;
   color: #9ca3af;
+  font-size: 14px;
 }
 
 .st-course-card__body,
@@ -612,6 +624,10 @@ onMounted(() => {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
+}
+
+.st-course-card__meta {
+  margin-bottom: 10px;
 }
 
 .st-course-card__info,
@@ -778,6 +794,10 @@ onMounted(() => {
   .st-upload-shell,
   .st-chapter-item {
     grid-template-columns: 1fr;
+  }
+
+  .st-card__header {
+    display: grid;
   }
 
   .st-chapter-item__number {

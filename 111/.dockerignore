@@ -1,0 +1,13 @@
+node_modules
+frontend-vue/node_modules
+frontend-vue/dist
+.git
+.gitignore
+.idea
+.vscode
+.env
+.env.local
+temp
+storage
+npm-debug.log*
+*.log

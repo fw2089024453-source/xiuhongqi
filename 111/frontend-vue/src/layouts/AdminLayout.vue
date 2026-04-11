@@ -13,28 +13,43 @@ const userName = computed(() => authStore.user?.display_name || authStore.user?.
 const menuItems = [
   {
     index: '/admin',
-    label: '总览控制台',
-    desc: '统计、公告和近期变化',
+    label: '总览',
+    desc: '查看概览、公告和最近动态',
   },
   {
     index: '/admin/reviews',
-    label: '作品审核',
-    desc: '审核视频与绣红旗投稿',
+    label: '审核',
+    desc: '审核视频与绣红旗投稿内容',
+  },
+  {
+    index: '/admin/red-culture',
+    label: '红旗文化',
+    desc: '管理故事、时间线节点和精神语录',
+  },
+  {
+    index: '/admin/public-welfare',
+    label: '公益纪实',
+    desc: '管理活动、志愿者故事和发展历程',
+  },
+  {
+    index: '/admin/skill-teaching',
+    label: '技艺教学',
+    desc: '管理课程、资源和学员作品审核',
   },
   {
     index: '/admin/operations',
     label: '运营处理',
-    desc: '处理留言、报名与联系消息',
+    desc: '处理留言、报名和联系消息',
   },
   {
     index: '/admin/users',
     label: '用户管理',
-    desc: '查看用户、角色与账号状态',
+    desc: '查看账号角色、状态和风险信息',
   },
   {
     index: '/admin/interaction',
     label: '互动管理',
-    desc: '管理论坛话题、帖子与活动',
+    desc: '管理论坛话题、帖子和互动活动',
   },
 ]
 
@@ -44,7 +59,7 @@ function goHome() {
 
 function logout() {
   authStore.logout()
-  ElMessage.success('已退出后台')
+  ElMessage.success('已退出登录')
   router.push('/login')
 }
 </script>
@@ -55,7 +70,10 @@ function logout() {
       <div class="admin-brand">
         <p class="admin-brand__kicker">ADMIN STUDIO</p>
         <h1>平台运营后台</h1>
-        <p>先把审核、公告和统计做扎实，再逐步扩展到内容发布、用户治理和活动管理。</p>
+        <p>
+          审核、内容运营、用户治理和互动管理现在都集中在这里。新增的三块内容管理页已经接入左侧导航，
+          后续可以直接在后台完成录入、编辑和发布，不用再跳出管理区。
+        </p>
       </div>
 
       <div class="admin-profile">
@@ -74,11 +92,11 @@ function logout() {
       </el-menu>
 
       <div class="admin-roadmap">
-        <p class="admin-roadmap__title">下一批功能</p>
+        <p class="admin-roadmap__title">当前已覆盖</p>
         <ul>
-          <li>内容发布面板</li>
-          <li>用户与留言管理</li>
-          <li>活动报名治理</li>
+          <li>赛事审核与公告管理</li>
+          <li>红旗文化、公益纪实、技艺教学内容运营</li>
+          <li>用户、运营与互动模块管理</li>
         </ul>
       </div>
 

@@ -7,7 +7,10 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
-    "build": "npm --prefix frontend-vue run build"
+    "build": "node scripts/build-frontend.mjs",
+    "seed:demo": "node scripts/seed-demo-content.mjs",
+    "test:smoke": "node scripts/smoke-test.mjs",
+    "test:page-smoke": "node scripts/page-smoke.mjs"
   },
   "keywords": [
     "非遗文化",
@@ -31,6 +34,7 @@
   "devDependencies": {
     "eslint": "^8.50.0",
     "nodemon": "^3.0.1",
+    "playwright": "^1.59.1",
     "prettier": "^3.0.3"
   }
 }

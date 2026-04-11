@@ -36,6 +36,7 @@ Thumbs.db
 # Temporary files
 temp/
 *.tmp
+storage/
 
 # Build outputs
 dist/
