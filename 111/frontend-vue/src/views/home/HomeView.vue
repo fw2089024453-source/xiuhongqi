@@ -646,6 +646,23 @@ onMounted(() => {
   }
 }
 
+@media (max-width: 1023px) {
+  .hero-panel__content,
+  .section-block,
+  .split-card {
+    padding: 26px;
+  }
+
+  .status-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .hero-panel__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @media (max-width: 768px) {
   .hero-panel__content,
   .section-block,
@@ -661,6 +678,21 @@ onMounted(() => {
   .hero-panel__actions {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .status-card__header,
+  .announcement-card__meta,
+  .update-card__meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .fact-card,
+  .stat-card,
+  .announcement-card,
+  .update-card,
+  .deployment-card {
+    padding: 16px;
   }
 
   .entrance-card__button {

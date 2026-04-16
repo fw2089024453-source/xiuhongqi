@@ -681,6 +681,25 @@ onMounted(() => {
   gap: 14px;
 }
 
+@media (max-width: 1023px) {
+  .uc-hero {
+    padding: 30px;
+  }
+
+  .uc-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .uc-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .uc-profile {
+    padding: 24px 22px;
+  }
+}
+
 @media (max-width: 768px) {
   .uc-hero,
   .uc-main-card :deep(.el-card__body) {
@@ -695,6 +714,40 @@ onMounted(() => {
   .uc-card__header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .uc-profile {
+    align-items: stretch;
+    text-align: left;
+  }
+
+  .uc-avatar {
+    width: 88px;
+    height: 88px;
+    border-radius: 24px;
+    font-size: 34px;
+  }
+
+  .uc-profile__tags,
+  .uc-profile__info,
+  .uc-list-item__meta,
+  .uc-list-item__footer {
+    justify-content: flex-start;
+  }
+
+  .uc-profile :deep(.el-button),
+  .uc-card__header :deep(.el-button) {
+    width: 100%;
+  }
+
+  .uc-work-card__image {
+    height: 168px;
+  }
+
+  .uc-work-card__body,
+  .uc-list-item,
+  .uc-detail-item {
+    padding: 16px;
   }
 }
 </style>

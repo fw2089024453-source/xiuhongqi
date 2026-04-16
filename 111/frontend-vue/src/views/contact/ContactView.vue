@@ -357,6 +357,21 @@ onMounted(async () => {
   font-size: 13px;
 }
 
+@media (max-width: 1023px) {
+  .ct-hero {
+    padding: 30px;
+  }
+
+  .ct-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ct-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
 @media (max-width: 768px) {
   .ct-hero,
   .ct-card :deep(.el-card__body) {
@@ -370,6 +385,20 @@ onMounted(async () => {
   .ct-card__header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .ct-form :deep(.el-button) {
+    width: 100%;
+  }
+
+  .ct-latest-item__meta {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .ct-info-item,
+  .ct-latest-item {
+    padding: 16px;
   }
 }
 </style>

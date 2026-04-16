@@ -24,8 +24,8 @@ COPY config ./config
 COPY data ./data
 COPY public ./public
 COPY server ./server
-COPY frontend-vue/dist ./frontend-vue/dist
-COPY scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
+COPY --from=builder /app/frontend-vue/dist ./frontend-vue/dist
+COPY scripts ./scripts
 
 RUN mkdir -p /app/public/uploads /app/public/uploads-seed \
   && if [ -d /app/public/uploads ]; then cp -a /app/public/uploads/. /app/public/uploads-seed/; fi \

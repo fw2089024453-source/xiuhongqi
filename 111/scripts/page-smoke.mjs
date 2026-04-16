@@ -1019,6 +1019,8 @@ async function main() {
           publicPage.locator('.vc-detail__info .el-button--danger').click(),
         ])
 
+        await publicPage.waitForTimeout(300)
+        await publicPage.waitForSelector('.vc-comment-form textarea', { timeout: 15000 })
         await publicPage.locator('.vc-comment-form textarea').fill(fixture.videoComment)
         await Promise.all([
           publicPage.waitForResponse(
@@ -1064,6 +1066,8 @@ async function main() {
           publicPage.locator('.ec-detail__info .el-button--danger').click(),
         ])
 
+        await publicPage.waitForTimeout(300)
+        await publicPage.waitForSelector('.ec-comment-form textarea', { timeout: 15000 })
         await publicPage.locator('.ec-comment-form textarea').fill(fixture.embComment)
         await Promise.all([
           publicPage.waitForResponse(

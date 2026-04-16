@@ -903,7 +903,6 @@ onMounted(() => {
 
 .ia-card__header,
 .ia-card__actions,
-.ia-message-shell,
 .ia-event-card__meta,
 .ia-topic-card__footer,
 .ia-post-card__footer,
@@ -934,6 +933,7 @@ onMounted(() => {
 }
 
 .ia-section-chip {
+  min-height: 40px;
   padding: 10px 16px;
   border-radius: 999px;
   border: 1px solid #dbeafe;
@@ -961,6 +961,7 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  min-width: 0;
 }
 
 .ia-topic-list,
@@ -1031,6 +1032,7 @@ onMounted(() => {
 
 .ia-like-btn {
   width: fit-content;
+  min-height: 38px;
   padding: 8px 14px;
   border: 1px solid #dbeafe;
   border-radius: 999px;
@@ -1046,6 +1048,8 @@ onMounted(() => {
 }
 
 .ia-message-shell {
+  display: grid;
+  gap: 18px;
   align-items: start;
   grid-template-columns: minmax(280px, 0.7fr) minmax(0, 1.3fr);
 }
@@ -1054,6 +1058,10 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.ia-message-list {
+  min-width: 0;
 }
 
 .ia-message-card img,
@@ -1096,16 +1104,87 @@ onMounted(() => {
   font-size: 14px;
 }
 
+@media (max-width: 1023px) {
+  .ia-hero {
+    padding: 30px;
+  }
+
+  .ia-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ia-card__actions,
+  .ia-post-card__header,
+  .ia-topic-detail__footer,
+  .ia-comment-card__header,
+  .ia-message-card__header {
+    align-items: flex-start;
+  }
+
+  .ia-forum-grid,
+  .ia-message-shell {
+    grid-template-columns: 1fr;
+  }
+}
+
 @media (max-width: 768px) {
   .ia-hero,
   .ia-card :deep(.el-card__body) {
     padding: 24px;
   }
 
-  .ia-card__header,
-  .ia-message-shell,
-  .ia-forum-grid {
-    grid-template-columns: 1fr;
+  .ia-page {
+    gap: 18px;
+  }
+
+  .ia-summary-card,
+  .ia-latest-card,
+  .ia-topic-card,
+  .ia-topic-detail__hero,
+  .ia-post-card,
+  .ia-comment-focus,
+  .ia-comment-card,
+  .ia-message-form,
+  .ia-message-card,
+  .ia-event-card__body {
+    padding: 16px;
+  }
+
+  .ia-card__actions,
+  .ia-comment-form :deep(.el-button),
+  .ia-message-form :deep(.el-button),
+  .ia-topic-detail__hero :deep(.el-button) {
+    width: 100%;
+  }
+
+  .ia-card__actions :deep(.el-button) {
+    width: 100%;
+  }
+
+  .ia-topic-card__footer,
+  .ia-post-card__footer,
+  .ia-topic-detail__footer,
+  .ia-event-card__meta,
+  .ia-post-card__header,
+  .ia-comment-card__header,
+  .ia-message-card__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ia-event-card__media {
+    height: 180px;
+  }
+
+  .ia-message-card img,
+  .ia-event-card__media img {
+    max-height: 220px;
+  }
+
+  .ia-like-btn {
+    width: 100%;
   }
 }
 </style>

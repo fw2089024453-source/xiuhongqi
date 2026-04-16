@@ -1,5 +1,5 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { useAuthStore } from '@/stores/auth'
@@ -7,6 +7,7 @@ import { useAuthStore } from '@/stores/auth'
 const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
+const mobileNavVisible = ref(false)
 
 const menuItems = [
   { path: '/', label: '首页', summary: '品牌门户' },
@@ -27,12 +28,18 @@ function isActive(path) {
   return path === '/' ? activePath.value === '/' : activePath.value.startsWith(path)
 }
 
+function closeMobileNav() {
+  mobileNavVisible.value = false
+}
+
 function navigateTo(path) {
+  closeMobileNav()
   router.push(path)
 }
 
 function handleLogout() {
   authStore.logout()
+  closeMobileNav()
   ElMessage.success('已退出登录')
   router.push('/')
 }
@@ -74,6 +81,13 @@ function handleLogout() {
           <el-button v-else type="danger" @click="navigateTo('/login')">登录 / 注册</el-button>
         </div>
       </div>
+
+      <div class="shell-mobile-actions">
+        <el-button plain @click="navigateTo(authStore.isLoggedIn ? '/user' : '/login')">
+          {{ authStore.isLoggedIn ? '用户中心' : '登录 / 注册' }}
+        </el-button>
+        <el-button type="danger" plain @click="mobileNavVisible = true">打开菜单</el-button>
+      </div>
     </header>
 
     <main class="shell-main">
@@ -93,6 +107,42 @@ function handleLogout() {
         <p class="footer-company">@ 旗芯数智（陕西）科技有限公司 版权所有</p>
       </div>
     </footer>
+
+    <el-drawer v-model="mobileNavVisible" direction="rtl" :with-header="false" class="shell-mobile-drawer">
+      <div class="shell-mobile-drawer__inner">
+        <div class="shell-mobile-drawer__brand" @click="navigateTo('/')">
+          <p class="brand-kicker">XIU HONG QI</p>
+          <h2>平台导航</h2>
+          <p>手机端可从这里进入各个专题页面、用户中心和后台入口。</p>
+        </div>
+
+        <div class="user-chip user-chip--mobile">
+          <span class="user-chip__label">平台身份</span>
+          <strong>{{ username }}</strong>
+        </div>
+
+        <nav class="shell-mobile-drawer__nav" aria-label="移动端导航">
+          <button
+            v-for="item in menuItems"
+            :key="item.path"
+            type="button"
+            class="shell-nav__item"
+            :class="{ 'shell-nav__item--active': isActive(item.path) }"
+            @click="navigateTo(item.path)"
+          >
+            <strong>{{ item.label }}</strong>
+            <span>{{ item.summary }}</span>
+          </button>
+        </nav>
+
+        <div class="shell-mobile-drawer__actions">
+          <el-button v-if="showAdminEntry" plain @click="navigateTo('/admin')">进入后台</el-button>
+          <el-button v-if="authStore.isLoggedIn" plain @click="navigateTo('/user')">用户中心</el-button>
+          <el-button v-if="authStore.isLoggedIn" type="danger" @click="handleLogout">退出登录</el-button>
+          <el-button v-else type="danger" @click="navigateTo('/login')">登录 / 注册</el-button>
+        </div>
+      </div>
+    </el-drawer>
   </div>
 </template>
 
@@ -103,18 +153,17 @@ function handleLogout() {
 }
 
 .shell-header,
+.shell-main,
 .footer-card {
-  width: min(1400px, calc(100vw - 36px));
+  width: min(1400px, 100%);
   margin: 0 auto;
 }
 
-
 .shell-header {
   display: grid;
-  grid-template-columns: 250px minmax(0, 1fr) 240px;
+  grid-template-columns: minmax(0, 250px) minmax(0, 1fr) minmax(0, 240px);
   gap: 16px;
   align-items: start;
-  margin-top: 0;
   padding: 18px;
   border: 1px solid rgba(234, 217, 199, 0.9);
   border-radius: 30px;
@@ -123,6 +172,7 @@ function handleLogout() {
 }
 
 .shell-header__brand {
+  min-width: 0;
   cursor: pointer;
 }
 
@@ -138,7 +188,7 @@ function handleLogout() {
 .brand-title {
   margin-top: 8px;
   font-family: "Source Han Serif SC", "STSong", "SimSun", serif;
-  font-size: 28px;
+  font-size: clamp(26px, 3vw, 28px);
   line-height: 1.1;
   color: var(--xhq-primary-deep);
 }
@@ -163,6 +213,8 @@ function handleLogout() {
   justify-content: center;
   gap: 4px;
   min-height: 72px;
+  width: 100%;
+  min-width: 0;
   padding: 12px 14px;
   text-align: left;
   border: 1px solid #eee0d2;
@@ -224,18 +276,27 @@ function handleLogout() {
   margin-top: 6px;
   color: var(--xhq-primary-deep);
   font-size: 17px;
+  line-height: 1.4;
 }
 
-.action-buttons {
+.action-buttons,
+.shell-mobile-actions,
+.shell-mobile-drawer__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.action-buttons {
   justify-content: flex-end;
 }
 
+.shell-mobile-actions {
+  display: none;
+}
+
 .shell-main {
-  width: min(1400px, calc(100vw - 36px));
-  margin: 18px auto 0;
+  margin-top: 18px;
 }
 
 .shell-footer {
@@ -272,6 +333,44 @@ function handleLogout() {
   line-height: 1.8;
 }
 
+.shell-mobile-drawer__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 100%;
+}
+
+.shell-mobile-drawer__brand {
+  padding: 4px 0 8px;
+  cursor: pointer;
+}
+
+.shell-mobile-drawer__brand h2 {
+  margin: 10px 0 8px;
+  color: var(--xhq-primary-deep);
+  font-family: "Source Han Serif SC", "STSong", "SimSun", serif;
+  font-size: 26px;
+}
+
+.shell-mobile-drawer__brand p:last-child {
+  margin: 0;
+  color: var(--xhq-text-muted);
+  line-height: 1.7;
+}
+
+.shell-mobile-drawer__nav {
+  display: grid;
+  gap: 10px;
+}
+
+.shell-mobile-drawer__actions {
+  margin-top: auto;
+}
+
+.shell-mobile-drawer__actions :deep(.el-button) {
+  width: 100%;
+}
+
 @media (max-width: 1200px) {
   .shell-header {
     grid-template-columns: 1fr;
@@ -288,39 +387,60 @@ function handleLogout() {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .app-shell {
     padding: 12px;
   }
 
-  .shell-ribbon,
   .shell-header,
   .shell-main,
   .footer-card {
-    width: min(100vw - 24px, 100%);
-  }
-
-  .shell-ribbon,
-  .footer-card {
-    flex-direction: column;
-    align-items: flex-start;
+    width: 100%;
   }
 
   .shell-header {
+    gap: 14px;
     padding: 16px;
     border-radius: 24px;
   }
 
-  .shell-nav {
-    grid-template-columns: 1fr;
+  .brand-title {
+    font-size: clamp(22px, 8vw, 30px);
   }
 
+  .brand-subtitle {
+    font-size: 12px;
+  }
+
+  .shell-nav,
   .shell-header__actions {
-    flex-direction: column;
+    display: none;
   }
 
-  .action-buttons {
-    justify-content: flex-start;
+  .shell-mobile-actions {
+    display: flex;
+  }
+
+  .shell-mobile-actions :deep(.el-button) {
+    flex: 1 1 calc(50% - 4px);
+    min-width: 0;
+  }
+
+  .footer-card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 18px;
+    border-radius: 22px;
+  }
+
+  .footer-card h3 {
+    font-size: clamp(18px, 5vw, 22px);
+  }
+}
+
+@media (max-width: 420px) {
+  .shell-mobile-actions :deep(.el-button) {
+    flex-basis: 100%;
   }
 }
 </style>
